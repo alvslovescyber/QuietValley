@@ -9,11 +9,11 @@ namespace PixelHomestead.Game.UI;
 
 public sealed class GameUiRenderer(Texture2D pixel, PixelFont font, ArtAssets art)
 {
-    public static readonly Rectangle NewGameButton = new(54, 278, 98, 30);
-    public static readonly Rectangle LoadGameButton = new(164, 294, 98, 30);
-    public static readonly Rectangle SettingsButton = new(274, 278, 98, 30);
-    public static readonly Rectangle CreditsButton = new(384, 294, 98, 30);
-    public static readonly Rectangle QuitButton = new(494, 278, 98, 30);
+    public static readonly Rectangle NewGameButton = new(94, 270, 84, 40);
+    public static readonly Rectangle LoadGameButton = new(207, 270, 84, 40);
+    public static readonly Rectangle SettingsButton = new(320, 270, 84, 40);
+    public static readonly Rectangle CreditsButton = new(432, 270, 84, 40);
+    public static readonly Rectangle QuitButton = new(546, 270, 84, 40);
     public static readonly Rectangle ExitHomeButton = new(488, 306, 112, 26);
     public static readonly Rectangle SleepHomeButton = new(368, 306, 104, 26);
 
@@ -21,7 +21,6 @@ public sealed class GameUiRenderer(Texture2D pixel, PixelFont font, ArtAssets ar
     {
         DrawTitleScene(spriteBatch);
         DrawTitleSign(spriteBatch);
-        DrawMenuRibbon(spriteBatch);
 
         DrawMenuButton(spriteBatch, NewGameButton, "New Farm", mouse, "sprout");
         DrawMenuButton(spriteBatch, LoadGameButton, "Continue", mouse, "berry");
@@ -95,7 +94,12 @@ public sealed class GameUiRenderer(Texture2D pixel, PixelFont font, ArtAssets ar
         int y = HotbarY;
         DrawPanel(
             spriteBatch,
-            new Rectangle(startX - 7, y - 7, GameConstants.HotbarSlots * HotbarStride + 12, 36),
+            new Rectangle(
+                startX - 8,
+                y - 8,
+                GameConstants.HotbarSlots * HotbarStride - (HotbarStride - HotbarSlotSize) + 16,
+                HotbarSlotSize + 16
+            ),
             PanelStyle.Compact
         );
 
@@ -113,13 +117,13 @@ public sealed class GameUiRenderer(Texture2D pixel, PixelFont font, ArtAssets ar
             }
 
             ItemDefinition item = state.Content.Items[slot.ItemId];
-            DrawItemIcon(spriteBatch, item, new Rectangle(slotRectangle.X + 3, slotRectangle.Y + 3, 15, 15));
+            DrawItemIcon(spriteBatch, item, new Rectangle(slotRectangle.X + 4, slotRectangle.Y + 4, 20, 20));
             if (slot.Quantity > 1)
             {
                 font.Draw(
                     spriteBatch,
                     slot.Quantity.ToString(),
-                    new Vector2(slotRectangle.X + 11, slotRectangle.Y + 13),
+                    new Vector2(slotRectangle.X + 17, slotRectangle.Y + 20),
                     Palette.Text,
                     1
                 );
@@ -425,57 +429,57 @@ public sealed class GameUiRenderer(Texture2D pixel, PixelFont font, ArtAssets ar
             new Rectangle(0, 0, GameConstants.VirtualWidth, GameConstants.VirtualHeight),
             Color.White
         );
-        spriteBatch.Draw(pixel, new Rectangle(0, 0, GameConstants.VirtualWidth, 118), new Color(14, 20, 64, 45));
-        spriteBatch.Draw(pixel, new Rectangle(0, 258, GameConstants.VirtualWidth, 102), new Color(20, 16, 12, 55));
     }
 
     private void DrawTitleSign(SpriteBatch spriteBatch)
     {
-        Rectangle sign = new(132, 36, 376, 112);
-        spriteBatch.Draw(pixel, new Rectangle(sign.X + 6, sign.Y + 8, sign.Width, sign.Height), Palette.PanelShadow);
-        spriteBatch.Draw(pixel, sign, new Color(117, 62, 32));
-        spriteBatch.Draw(
-            pixel,
-            new Rectangle(sign.X + 5, sign.Y + 5, sign.Width - 10, sign.Height - 10),
-            Palette.WoodLight
-        );
-        spriteBatch.Draw(
-            pixel,
-            new Rectangle(sign.X + 9, sign.Y + 9, sign.Width - 18, sign.Height - 18),
-            new Color(255, 199, 135)
-        );
-        spriteBatch.Draw(pixel, new Rectangle(sign.X + 14, sign.Y + 14, sign.Width - 28, 3), Palette.ParchmentLight);
-        spriteBatch.Draw(
-            pixel,
-            new Rectangle(sign.X + 14, sign.Bottom - 18, sign.Width - 28, 2),
-            new Color(196, 115, 57)
-        );
-
-        DrawTinyFlower(spriteBatch, sign.X + 28, sign.Y + 26);
-        DrawTinyFlower(spriteBatch, sign.Right - 46, sign.Y + 72);
-        DrawLeafCluster(spriteBatch, sign.X + 48, sign.Y - 10);
-        DrawLeafCluster(spriteBatch, sign.Right - 72, sign.Y + 6);
-
-        DrawCenteredText(spriteBatch, "PIXEL", new Rectangle(sign.X, sign.Y + 29, sign.Width, 24), Palette.WoodDark, 3);
+        Rectangle sign = new(164, 46, 312, 106);
+        DrawCenteredText(spriteBatch, "PIXEL", new Rectangle(sign.X, sign.Y + 27, sign.Width, 24), Palette.WoodDark, 3);
         DrawCenteredText(
             spriteBatch,
             "HOMESTEAD",
-            new Rectangle(sign.X, sign.Y + 72, sign.Width, 24),
+            new Rectangle(sign.X, sign.Y + 68, sign.Width, 24),
             Palette.WoodDark,
             3
         );
     }
 
-    private void DrawMenuRibbon(SpriteBatch spriteBatch)
-    {
-        spriteBatch.Draw(pixel, new Rectangle(36, 270, 568, 68), new Color(35, 22, 17, 105));
-        spriteBatch.Draw(pixel, new Rectangle(48, 274, 544, 2), new Color(255, 231, 150, 70));
-    }
-
     private void DrawMenuButton(SpriteBatch spriteBatch, Rectangle rectangle, string label, Point mouse, string icon)
     {
-        DrawButton(spriteBatch, rectangle, label, mouse);
-        DrawMenuIcon(spriteBatch, rectangle.Center.X - 5, rectangle.Bottom - 9, icon);
+        bool hovered = rectangle.Contains(mouse);
+        if (hovered)
+        {
+            spriteBatch.Draw(
+                pixel,
+                new Rectangle(rectangle.X - 2, rectangle.Y - 2, rectangle.Width + 4, 2),
+                Palette.Highlight
+            );
+            spriteBatch.Draw(
+                pixel,
+                new Rectangle(rectangle.X - 2, rectangle.Bottom, rectangle.Width + 4, 2),
+                Palette.Highlight
+            );
+            spriteBatch.Draw(
+                pixel,
+                new Rectangle(rectangle.X - 2, rectangle.Y - 2, 2, rectangle.Height + 4),
+                Palette.Highlight
+            );
+            spriteBatch.Draw(
+                pixel,
+                new Rectangle(rectangle.Right, rectangle.Y - 2, 2, rectangle.Height + 4),
+                Palette.Highlight
+            );
+            spriteBatch.Draw(pixel, rectangle, new Color(255, 242, 188, 35));
+        }
+
+        DrawCenteredText(
+            spriteBatch,
+            label.ToUpperInvariant(),
+            new Rectangle(rectangle.X, rectangle.Y + 12, rectangle.Width, 12),
+            Palette.WoodDark,
+            1
+        );
+        DrawMenuIcon(spriteBatch, rectangle.Center.X - 5, rectangle.Bottom - 12, icon);
     }
 
     private void DrawMenuIcon(SpriteBatch spriteBatch, int x, int y, string icon)
@@ -660,7 +664,7 @@ public sealed class GameUiRenderer(Texture2D pixel, PixelFont font, ArtAssets ar
 
     private static Rectangle HotbarSlotRectangle(int slotIndex)
     {
-        return new Rectangle(HotbarStartX() + slotIndex * HotbarStride, HotbarY, 21, 21);
+        return new Rectangle(HotbarStartX() + slotIndex * HotbarStride, HotbarY, HotbarSlotSize, HotbarSlotSize);
     }
 
     private static Rectangle InventorySlotRectangle(int slotIndex)
@@ -670,8 +674,9 @@ public sealed class GameUiRenderer(Texture2D pixel, PixelFont font, ArtAssets ar
         return new Rectangle(146 + column * 27, 112 + row * 27, 23, 23);
     }
 
-    private const int HotbarY = 315;
-    private const int HotbarStride = 23;
+    private const int HotbarY = 304;
+    private const int HotbarSlotSize = 28;
+    private const int HotbarStride = 32;
 }
 
 public enum PanelStyle

@@ -284,12 +284,12 @@ public sealed class WorldRenderer(ArtAssets art, Texture2D pixel)
     private void DrawHouse(SpriteBatch spriteBatch, Vector2 camera)
     {
         Rectangle destination = new(
-            5 * GameConstants.TileSize - (int)camera.X - 6,
-            5 * GameConstants.TileSize - (int)camera.Y,
-            112,
-            96
+            4 * GameConstants.TileSize - (int)camera.X - 16,
+            5 * GameConstants.TileSize - (int)camera.Y - 16,
+            176,
+            144
         );
-        DrawShadow(spriteBatch, new Rectangle(destination.X + 8, destination.Y + 82, destination.Width - 16, 10));
+        DrawShadow(spriteBatch, new Rectangle(destination.X + 12, destination.Y + 126, destination.Width - 24, 12));
         spriteBatch.Draw(art.Props, destination, ArtAssets.HouseSource, Color.White);
     }
 
@@ -348,59 +348,65 @@ public sealed class WorldRenderer(ArtAssets art, Texture2D pixel)
             switch (tile.Type)
             {
                 case TileType.Tree:
-                    DrawShadow(spriteBatch, new Rectangle(tileRectangle.X - 5, tileRectangle.Y + 12, 26, 7));
+                    int treeVariant = Math.Abs(position.X * 17 + position.Y * 31);
+                    DrawShadow(spriteBatch, new Rectangle(tileRectangle.X - 14, tileRectangle.Y + 10, 44, 10));
                     spriteBatch.Draw(
                         art.Props,
-                        new Rectangle(tileRectangle.X - 8, tileRectangle.Y - 32, 32, 48),
-                        ArtAssets.TreeSource,
+                        new Rectangle(tileRectangle.X - 16, tileRectangle.Y - 56, 48, 72),
+                        ArtAssets.TreeSource(treeVariant),
                         Color.White
                     );
                     break;
                 case TileType.Bush:
-                    DrawShadow(spriteBatch, new Rectangle(tileRectangle.X + 1, tileRectangle.Y + 10, 14, 4));
+                    DrawShadow(spriteBatch, new Rectangle(tileRectangle.X - 3, tileRectangle.Y + 10, 22, 5));
                     spriteBatch.Draw(
                         art.Props,
-                        new Rectangle(tileRectangle.X - 4, tileRectangle.Y - 4, 24, 20),
-                        ArtAssets.BushSource,
+                        new Rectangle(tileRectangle.X - 8, tileRectangle.Y - 8, 32, 32),
+                        ArtAssets.BushSource(position.X + position.Y),
                         Color.White
                     );
                     break;
                 case TileType.Mushroom:
-                    DrawShadow(spriteBatch, new Rectangle(tileRectangle.X - 6, tileRectangle.Y + 13, 28, 6));
+                    DrawShadow(spriteBatch, new Rectangle(tileRectangle.X - 8, tileRectangle.Y + 12, 32, 6));
                     spriteBatch.Draw(
                         art.Props,
-                        new Rectangle(tileRectangle.X - 8, tileRectangle.Y - 20, 32, 36),
+                        new Rectangle(tileRectangle.X - 14, tileRectangle.Y - 18, 48, 36),
                         ArtAssets.MushroomSource,
                         Color.White
                     );
                     break;
                 case TileType.Stone:
-                    DrawShadow(spriteBatch, new Rectangle(tileRectangle.X + 2, tileRectangle.Y + 11, 12, 4));
-                    DrawStone(spriteBatch, tileRectangle);
-                    break;
-                case TileType.Barrel:
-                    DrawShadow(spriteBatch, new Rectangle(tileRectangle.X + 2, tileRectangle.Y + 13, 12, 4));
+                    DrawShadow(spriteBatch, new Rectangle(tileRectangle.X - 3, tileRectangle.Y + 11, 22, 5));
                     spriteBatch.Draw(
                         art.Props,
-                        new Rectangle(tileRectangle.X, tileRectangle.Y - 4, 16, 20),
+                        new Rectangle(tileRectangle.X - 10, tileRectangle.Y - 4, 36, 28),
+                        ArtAssets.StoneSource,
+                        Color.White
+                    );
+                    break;
+                case TileType.Barrel:
+                    DrawShadow(spriteBatch, new Rectangle(tileRectangle.X - 1, tileRectangle.Y + 13, 18, 5));
+                    spriteBatch.Draw(
+                        art.Props,
+                        new Rectangle(tileRectangle.X - 4, tileRectangle.Y - 10, 24, 30),
                         ArtAssets.BarrelSource,
                         Color.White
                     );
                     break;
                 case TileType.Fence:
-                    DrawShadow(spriteBatch, new Rectangle(tileRectangle.X, tileRectangle.Y + 13, 16, 4));
+                    DrawShadow(spriteBatch, new Rectangle(tileRectangle.X - 8, tileRectangle.Y + 13, 32, 4));
                     spriteBatch.Draw(
                         art.Props,
-                        new Rectangle(tileRectangle.X - 4, tileRectangle.Y - 2, 24, 18),
+                        new Rectangle(tileRectangle.X - 8, tileRectangle.Y - 2, 32, 18),
                         ArtAssets.FenceSource,
                         Color.White
                     );
                     break;
                 case TileType.ShippingBox:
-                    DrawShadow(spriteBatch, new Rectangle(tileRectangle.X + 1, tileRectangle.Y + 13, 15, 4));
+                    DrawShadow(spriteBatch, new Rectangle(tileRectangle.X - 3, tileRectangle.Y + 13, 22, 5));
                     spriteBatch.Draw(
                         art.Props,
-                        new Rectangle(tileRectangle.X - 2, tileRectangle.Y - 3, 20, 20),
+                        new Rectangle(tileRectangle.X - 8, tileRectangle.Y - 8, 32, 32),
                         ArtAssets.ShippingBoxSource,
                         Color.White
                     );
@@ -409,10 +415,10 @@ public sealed class WorldRenderer(ArtAssets art, Texture2D pixel)
                     DrawTownHouse(spriteBatch, position, tileRectangle);
                     break;
                 case TileType.Well:
-                    DrawShadow(spriteBatch, new Rectangle(tileRectangle.X - 10, tileRectangle.Y + 8, 38, 10));
+                    DrawShadow(spriteBatch, new Rectangle(tileRectangle.X - 16, tileRectangle.Y + 10, 48, 10));
                     spriteBatch.Draw(
-                        art.InteriorTown,
-                        new Rectangle(tileRectangle.X - 18, tileRectangle.Y - 34, 52, 62),
+                        art.Props,
+                        new Rectangle(tileRectangle.X - 20, tileRectangle.Y - 44, 58, 72),
                         ArtAssets.WellSource,
                         Color.White
                     );
@@ -420,8 +426,8 @@ public sealed class WorldRenderer(ArtAssets art, Texture2D pixel)
                 case TileType.Mailbox:
                     DrawShadow(spriteBatch, new Rectangle(tileRectangle.X + 1, tileRectangle.Y + 13, 12, 4));
                     spriteBatch.Draw(
-                        art.InteriorTown,
-                        new Rectangle(tileRectangle.X - 4, tileRectangle.Y - 18, 28, 42),
+                        art.Props,
+                        new Rectangle(tileRectangle.X - 8, tileRectangle.Y - 28, 32, 54),
                         ArtAssets.MailboxSource,
                         Color.White
                     );
@@ -429,8 +435,8 @@ public sealed class WorldRenderer(ArtAssets art, Texture2D pixel)
                 case TileType.Signpost:
                     DrawShadow(spriteBatch, new Rectangle(tileRectangle.X - 1, tileRectangle.Y + 13, 18, 4));
                     spriteBatch.Draw(
-                        art.InteriorTown,
-                        new Rectangle(tileRectangle.X - 10, tileRectangle.Y - 22, 42, 42),
+                        art.Props,
+                        new Rectangle(tileRectangle.X - 16, tileRectangle.Y - 28, 48, 54),
                         ArtAssets.SignpostSource,
                         Color.White
                     );
@@ -438,8 +444,8 @@ public sealed class WorldRenderer(ArtAssets art, Texture2D pixel)
                 case TileType.LampPost:
                     DrawShadow(spriteBatch, new Rectangle(tileRectangle.X + 2, tileRectangle.Y + 13, 12, 4));
                     spriteBatch.Draw(
-                        art.InteriorTown,
-                        new Rectangle(tileRectangle.X - 8, tileRectangle.Y - 42, 32, 60),
+                        art.Props,
+                        new Rectangle(tileRectangle.X - 8, tileRectangle.Y - 68, 32, 88),
                         ArtAssets.LampPostSource,
                         Color.White
                     );
@@ -457,8 +463,8 @@ public sealed class WorldRenderer(ArtAssets art, Texture2D pixel)
         {
             DrawShadow(spriteBatch, new Rectangle(tileRectangle.X + 4, tileRectangle.Y + 78, 112, 13));
             spriteBatch.Draw(
-                art.InteriorTown,
-                new Rectangle(tileRectangle.X - 6, tileRectangle.Y - 50, 124, 112),
+                art.Props,
+                new Rectangle(tileRectangle.X - 8, tileRectangle.Y - 44, 112, 112),
                 ArtAssets.RedTownHouseSource,
                 Color.White
             );
@@ -467,8 +473,8 @@ public sealed class WorldRenderer(ArtAssets art, Texture2D pixel)
         {
             DrawShadow(spriteBatch, new Rectangle(tileRectangle.X + 4, tileRectangle.Y + 78, 98, 13));
             spriteBatch.Draw(
-                art.InteriorTown,
-                new Rectangle(tileRectangle.X - 4, tileRectangle.Y - 44, 108, 104),
+                art.Props,
+                new Rectangle(tileRectangle.X - 6, tileRectangle.Y - 42, 110, 110),
                 ArtAssets.YellowTownHouseSource,
                 Color.White
             );

@@ -5,3 +5,5 @@ obj/
 *.suo
 *.tmp
 TestResults/
+artifacts/
+src/PixelHomestead.Game/Assets/Generated/world_runtime_ai_alpha.png

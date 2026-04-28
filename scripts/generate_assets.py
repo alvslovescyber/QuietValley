@@ -26,6 +26,250 @@ def paste_cell(atlas: Image.Image, index: int, sprite: Image.Image, cell: int = 
     atlas.alpha_composite(sprite, ((index % columns) * cell, (index // columns) * cell))
 
 
+def is_chroma_key(pixel: tuple[int, int, int, int]) -> bool:
+    red, green, blue, alpha = pixel
+    return alpha > 0 and red > 190 and green < 115 and blue > 150 and red + blue > green * 4
+
+
+def is_purple_fringe(pixel: tuple[int, int, int, int]) -> bool:
+    red, green, blue, alpha = pixel
+    return alpha > 0 and blue > green + 25 and red > green + 20 and blue > 70 and red > 70 and green < 130
+
+
+def chroma_to_alpha(source: Image.Image) -> Image.Image:
+    image = source.convert("RGBA")
+    data = []
+    for pixel in image.getdata():
+        if is_chroma_key(pixel):
+            data.append((255, 0, 255, 0))
+        elif is_purple_fringe(pixel):
+            red, green, blue, alpha = pixel
+            if alpha < 24 or (red > 210 and blue > 150 and green < 80):
+                data.append((255, 0, 255, 0))
+            else:
+                data.append((34, 28, 24, max(35, min(120, alpha if alpha < 160 else int((red + blue - green) / 6)))))
+        else:
+            data.append(pixel)
+    image.putdata(data)
+    return image
+
+
+def solid_tile(sprite: Image.Image) -> Image.Image:
+    sprite = sprite.convert("RGBA")
+    valid = [
+        (red, green, blue)
+        for red, green, blue, alpha in sprite.getdata()
+        if alpha > 180 and not is_chroma_key((red, green, blue, alpha)) and not is_purple_fringe((red, green, blue, alpha))
+    ]
+    if not valid:
+        return sprite
+
+    average = tuple(sum(channel[index] for channel in valid) // len(valid) for index in range(3))
+    cleaned = []
+    for red, green, blue, alpha in sprite.getdata():
+        if alpha < 180 or is_chroma_key((red, green, blue, alpha)) or is_purple_fringe((red, green, blue, alpha)):
+            cleaned.append((*average, 255))
+        else:
+            cleaned.append((red, green, blue, 255))
+    sprite.putdata(cleaned)
+    return sprite
+
+
+def component_boxes(source: Image.Image) -> list[tuple[int, int, int, int, int]]:
+    width, height = source.size
+    pixels = source.load()
+    seen = bytearray(width * height)
+    boxes: list[tuple[int, int, int, int, int]] = []
+
+    for y in range(height):
+        for x in range(width):
+            index = y * width + x
+            if seen[index]:
+                continue
+            if is_chroma_key(pixels[x, y]):
+                seen[index] = 1
+                continue
+
+            stack = [(x, y)]
+            seen[index] = 1
+            min_x = max_x = x
+            min_y = max_y = y
+            count = 0
+            while stack:
+                current_x, current_y = stack.pop()
+                count += 1
+                min_x = min(min_x, current_x)
+                max_x = max(max_x, current_x)
+                min_y = min(min_y, current_y)
+                max_y = max(max_y, current_y)
+                for next_x, next_y in (
+                    (current_x + 1, current_y),
+                    (current_x - 1, current_y),
+                    (current_x, current_y + 1),
+                    (current_x, current_y - 1),
+                ):
+                    if not (0 <= next_x < width and 0 <= next_y < height):
+                        continue
+                    next_index = next_y * width + next_x
+                    if seen[next_index]:
+                        continue
+                    seen[next_index] = 1
+                    if not is_chroma_key(pixels[next_x, next_y]):
+                        stack.append((next_x, next_y))
+
+            if count > 100:
+                boxes.append((min_x, min_y, max_x, max_y, count))
+
+    return boxes
+
+
+def crop_component(
+    source: Image.Image,
+    box: tuple[int, int, int, int, int],
+    pad: int = 0,
+) -> Image.Image:
+    left, top, right, bottom, _ = box
+    left = max(0, left - pad)
+    top = max(0, top - pad)
+    right = min(source.width - 1, right + pad)
+    bottom = min(source.height - 1, bottom + pad)
+    return source.crop((left, top, right + 1, bottom + 1))
+
+
+def fit_sprite(sprite: Image.Image, size: tuple[int, int], bottom_pad: int = 0) -> Image.Image:
+    target_width, target_height = size
+    canvas = img(size)
+    available_width = max(1, target_width - bottom_pad * 2)
+    available_height = max(1, target_height - bottom_pad * 2)
+    scale = min(available_width / sprite.width, available_height / sprite.height)
+    new_width = max(1, int(sprite.width * scale))
+    new_height = max(1, int(sprite.height * scale))
+    resized = sprite.resize((new_width, new_height), Image.Resampling.LANCZOS)
+    canvas.alpha_composite(resized, ((target_width - new_width) // 2, target_height - new_height - bottom_pad))
+    return canvas
+
+
+def generated_world_source() -> tuple[Image.Image, Image.Image, list[tuple[int, int, int, int, int]]] | None:
+    source_path = OUT / "world_runtime_ai_source.png"
+    if not source_path.exists():
+        return None
+
+    source = Image.open(source_path).convert("RGBA")
+    alpha_source = chroma_to_alpha(source)
+    alpha_source.save(OUT / "world_runtime_ai_alpha.png")
+    return source, alpha_source, component_boxes(source)
+
+
+def nearest_component(
+    boxes: list[tuple[int, int, int, int, int]],
+    min_x: int,
+    min_y: int,
+    max_x: int | None = None,
+    max_y: int | None = None,
+) -> tuple[int, int, int, int, int]:
+    candidates = [
+        box
+        for box in boxes
+        if box[0] >= min_x
+        and box[1] >= min_y
+        and (max_x is None or box[0] <= max_x)
+        and (max_y is None or box[1] <= max_y)
+    ]
+    if not candidates:
+        raise ValueError(f"No generated component found near {min_x},{min_y}")
+    return sorted(candidates, key=lambda box: (-box[4], box[1], box[0]))[0]
+
+
+def try_make_ai_terrain() -> bool:
+    generated = generated_world_source()
+    if generated is None:
+        return False
+
+    _, alpha_source, boxes = generated
+    terrain = sorted([box for box in boxes if box[1] < 250], key=lambda box: box[0])
+    if len(terrain) < 12:
+        return False
+
+    atlas = img((128, 64))
+    terrain_map = {
+        0: 0,
+        1: 2,
+        2: 1,
+        3: 4,
+        4: 3,
+        5: 4,
+        6: 5,
+        7: 6,
+        8: 7,
+        9: 8,
+        10: 9,
+        11: 10,
+        12: 8,
+        13: 11,
+    }
+    for destination_index, source_index in terrain_map.items():
+        paste_cell(
+            atlas,
+            destination_index,
+            solid_tile(fit_sprite(crop_component(alpha_source, terrain[source_index]), (16, 16))),
+        )
+    atlas.save(OUT / "terrain.png")
+    return True
+
+
+def try_make_ai_props() -> bool:
+    generated = generated_world_source()
+    if generated is None:
+        return False
+
+    _, alpha_source, boxes = generated
+    atlas = img((512, 320))
+
+    tree_boxes = sorted(
+        [box for box in boxes if 250 <= box[1] <= 280 and box[3] > 430 and box[0] < 520],
+        key=lambda box: box[0],
+    )[:4]
+    if len(tree_boxes) < 4:
+        return False
+
+    for index, box in enumerate(tree_boxes):
+        atlas.alpha_composite(fit_sprite(crop_component(alpha_source, box, 2), (48, 72), 1), (index * 56, 0))
+
+    placements = [
+        ((520, 280, 630, 400), (224, 32), (32, 32)),
+        ((630, 280, 730, 400), (264, 32), (32, 32)),
+        ((730, 300, 830, 390), (304, 36), (36, 28)),
+        ((1020, 300, 1190, 390), (352, 32), (48, 36)),
+        ((720, 390, 810, 500), (408, 34), (24, 30)),
+        ((820, 390, 1010, 500), (440, 32), (34, 34)),
+        ((1020, 390, 1170, 500), (0, 76), (64, 28)),
+        ((1190, 390, 1390, 500), (72, 76), (80, 28)),
+        ((1400, 390, 1510, 500), (480, 32), (32, 32)),
+        ((40, 440, 500, 800), (0, 104), (176, 144)),
+        ((500, 520, 730, 790), (184, 112), (96, 108)),
+        ((760, 520, 990, 790), (288, 112), (96, 108)),
+        ((1000, 560, 1180, 780), (392, 128), (58, 72)),
+        ((1190, 580, 1280, 760), (456, 150), (32, 54)),
+        ((1280, 580, 1380, 760), (0, 256), (48, 54)),
+        ((1380, 550, 1510, 770), (56, 224), (32, 88)),
+        ((100, 790, 230, 950), (104, 252), (32, 56)),
+        ((940, 830, 1120, 930), (384, 272), (54, 30)),
+    ]
+    for bounds, destination, size in placements:
+        source_box = nearest_component(boxes, *bounds)
+        atlas.alpha_composite(fit_sprite(crop_component(alpha_source, source_box, 2), size), destination)
+
+    swim_boxes = sorted(
+        [box for box in boxes if box[1] >= 820 and 250 <= box[0] <= 930 and box[4] > 1000],
+        key=lambda box: box[0],
+    )[:4]
+    for index, box in enumerate(swim_boxes):
+        atlas.alpha_composite(fit_sprite(crop_component(alpha_source, box, 1), (48, 40)), (160 + index * 56, 264))
+
+    atlas.save(OUT / "props.png")
+    return True
+
+
 def terrain_sprite(kind: str, variant: int = 0) -> Image.Image:
     s = img((16, 16))
     d = ImageDraw.Draw(s)
@@ -98,6 +342,9 @@ def terrain_sprite(kind: str, variant: int = 0) -> Image.Image:
 
 
 def make_terrain() -> None:
+    if try_make_ai_terrain():
+        return
+
     atlas = img((128, 64))
     kinds = ["grass", "grass", "grass", "grass", "tall_grass", "flower", "path", "dirt", "soil", "water", "water", "water", "water", "shore"]
     for index, kind in enumerate(kinds):
@@ -106,6 +353,9 @@ def make_terrain() -> None:
 
 
 def make_props() -> None:
+    if try_make_ai_props():
+        return
+
     atlas = img((256, 160))
     d = ImageDraw.Draw(atlas)
     # tree 32x48
@@ -277,7 +527,8 @@ def paste_ai_tool_icons(atlas: Image.Image) -> None:
 
     atlas_indices = [0, 1, 2, 3, 4, 5, 16, 17, 18]
     for cell, atlas_index in zip(cells[:9], atlas_indices):
-        icon = cell.resize((16, 16), Image.Resampling.LANCZOS)
+        icon = chroma_to_alpha(cell).resize((16, 16), Image.Resampling.LANCZOS)
+        icon = chroma_to_alpha(icon)
         atlas.alpha_composite(icon, (atlas_index * 16, 0))
 
 

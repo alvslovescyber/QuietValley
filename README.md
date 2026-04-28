@@ -10,7 +10,13 @@ The current build is not a finished commercial game yet. It is a playable, modul
 
 ![Pixel Homestead title screen art](docs/images/home-screen-showcase.png)
 
-The title screen uses an original generated pixel-art countryside panorama with a night sky, mountains, trees, flowers, fences, and warm cozy lighting. The in-game menu overlays a custom wooden title sign and parchment-style buttons over this background.
+The title screen uses a new original generated pixel-art countryside scene with a warm valley sunset, farmhouse, pond, fences, lanterns, flowers, and built-in wooden/parchment menu plaques. The runtime draws crisp labels and hover highlights over the generated UI artwork.
+
+### Runtime Asset Showcase
+
+![Pixel Homestead runtime assets](docs/images/runtime-assets-showcase.png)
+
+The active runtime atlases now use the generated replacement assets for grass, water, farm soil, dirt paths, rocks, trees, bushes, props, fences, houses, town objects, swimming frames, and water ripples. Chroma-key purple backgrounds are stripped during atlas generation.
 
 ### Interior and Town Asset Direction
 
@@ -22,7 +28,7 @@ The house/interior pass adds a cozy living room screen, town house concepts, wel
 
 ![Pixel Homestead generated tool and item icons](docs/images/tool-and-item-icons.png)
 
-The hotbar uses a generated icon source for farming tools and hand-authored/generated atlas integration for tools, seeds, crops, and fish.
+The hotbar uses generated tool art and cleaned runtime icon atlas integration for tools, seeds, crops, and fish.
 
 ## Current Gameplay Features
 
@@ -112,7 +118,14 @@ The project currently includes original generated PNG assets in `src/PixelHomest
 python3 scripts/generate_assets.py
 ```
 
-The generator rebuilds deterministic atlases and integrates the generated tool source sheet into the runtime icon atlas.
+The generator rebuilds runtime atlases from the generated source sheets, removes chroma-key/purple background artifacts, and integrates the generated tool source sheet into the runtime icon atlas.
+
+## Downloads
+
+Packaged builds are published on GitHub Releases when available:
+
+- macOS: download the `.dmg`, open it, and run `PixelHomestead.Game`.
+- Windows: download the Windows package and run `PixelHomestead.Game.exe`.
 
 ## Save Location
 

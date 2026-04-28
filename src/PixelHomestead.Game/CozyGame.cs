@@ -359,7 +359,11 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
         GameState state = RequireState();
         Vector2 camera = _camera.Position;
         RequireWorldRenderer().DrawTerrain(spriteBatch, state, camera, _waterAnimation);
-        RequireWorldRenderer().DrawTargetHighlight(spriteBatch, _player.InteractionTarget(), camera);
+        GridPosition interactionTarget = _player.InteractionTarget();
+        if (ShouldDrawTargetHighlight(state, interactionTarget))
+        {
+            RequireWorldRenderer().DrawTargetHighlight(spriteBatch, interactionTarget, camera);
+        }
         RequirePlayerRenderer().Draw(spriteBatch, _player, camera);
         if (_isFishing)
         {
@@ -647,6 +651,11 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
     private bool IsHouseEntryTarget(GridPosition target)
     {
         return target.Y is >= 11 and <= 13 && target.X is >= 6 and <= 9;
+    }
+
+    private static bool ShouldDrawTargetHighlight(GameState state, GridPosition target)
+    {
+        return !state.World.GetTile(target).IsWater;
     }
 
     private void UpdateSwimmingOxygen(GameState state, float deltaSeconds)

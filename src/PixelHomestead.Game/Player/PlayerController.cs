@@ -12,8 +12,6 @@ public sealed class PlayerController
     private const float SwimSpeed = 46f;
     private const float Acceleration = 560f;
     private const float Deceleration = 720f;
-    private const float InteractionDistance = 18f;
-
     private float _dustTimer;
 
     public Vector2 Position { get; private set; }
@@ -90,26 +88,25 @@ public sealed class PlayerController
 
     public GridPosition InteractionTarget()
     {
-        Vector2 offset = Facing switch
-        {
-            Direction.Up => new Vector2(0, -InteractionDistance),
-            Direction.Down => new Vector2(0, InteractionDistance),
-            Direction.Left => new Vector2(-InteractionDistance, 0),
-            Direction.Right => new Vector2(InteractionDistance, 0),
-            _ => Vector2.Zero,
-        };
-
-        return WorldToTile(Center + offset);
+        return WorldToTile(Feet).Neighbor(Facing);
     }
 
     public GridPosition? MouseTarget(Vector2 worldPosition)
     {
-        if (Vector2.Distance(Center, worldPosition) > InteractionDistance + 8f)
+        GridPosition playerTile = WorldToTile(Feet);
+        GridPosition target = WorldToTile(worldPosition);
+        int manhattanDistance = Math.Abs(target.X - playerTile.X) + Math.Abs(target.Y - playerTile.Y);
+        if (manhattanDistance == 0)
+        {
+            return InteractionTarget();
+        }
+
+        if (manhattanDistance > 1)
         {
             return null;
         }
 
-        return WorldToTile(worldPosition);
+        return target;
     }
 
     public Rectangle InteractionRectangle()

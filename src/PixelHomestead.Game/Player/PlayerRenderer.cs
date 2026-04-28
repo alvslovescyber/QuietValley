@@ -9,7 +9,14 @@ public sealed class PlayerRenderer(ArtAssets art, Texture2D pixel)
     public void Draw(SpriteBatch spriteBatch, PlayerController player, Vector2 camera)
     {
         Vector2 screen = player.Position - camera;
-        spriteBatch.Draw(pixel, new Rectangle((int)screen.X + 2, (int)screen.Y + 14, 12, 3), new Color(31, 20, 14, 80));
+        if (!player.IsSwimming)
+        {
+            spriteBatch.Draw(
+                pixel,
+                new Rectangle((int)screen.X + 2, (int)screen.Y + 14, 12, 3),
+                new Color(31, 20, 14, 80)
+            );
+        }
 
         int frame = player.IsMoving ? (int)MathF.Floor(player.WalkCycle) % 4 : 0;
         Rectangle source = ArtAssets.PlayerSource(player.Facing, frame);
@@ -17,7 +24,7 @@ public sealed class PlayerRenderer(ArtAssets art, Texture2D pixel)
         Rectangle destination = new((int)screen.X - 4, (int)screen.Y + bob, 24, 16);
         if (player.IsSwimming)
         {
-            DrawSwimming(spriteBatch, player, screen, source, destination);
+            DrawSwimming(spriteBatch, player, screen, frame);
         }
         else
         {
@@ -35,25 +42,21 @@ public sealed class PlayerRenderer(ArtAssets art, Texture2D pixel)
         }
     }
 
-    private void DrawSwimming(
-        SpriteBatch spriteBatch,
-        PlayerController player,
-        Vector2 screen,
-        Rectangle source,
-        Rectangle destination
-    )
+    private void DrawSwimming(SpriteBatch spriteBatch, PlayerController player, Vector2 screen, int frame)
     {
-        Rectangle headSource = new(source.X, source.Y, source.Width, 10);
-        Rectangle headDestination = new(destination.X, destination.Y + 2, destination.Width, 10);
-        spriteBatch.Draw(art.Player, headDestination, headSource, Color.White);
+        Rectangle rippleDestination = new((int)screen.X - 19, (int)screen.Y + 1, 54, 30);
+        spriteBatch.Draw(art.Props, rippleDestination, ArtAssets.WaterRippleSource, Color.White * 0.9f);
+
+        Rectangle swimmerDestination = new((int)screen.X - 16, (int)screen.Y - 14, 48, 40);
+        spriteBatch.Draw(art.Props, swimmerDestination, ArtAssets.SwimmerSource(frame), Color.White);
         spriteBatch.Draw(
             pixel,
-            new Rectangle((int)screen.X + 1, (int)screen.Y + 11, 15, 3),
-            new Color(102, 205, 232, 185)
+            new Rectangle((int)screen.X - 3, (int)screen.Y + 12, 22, 3),
+            new Color(102, 205, 232, 135)
         );
         spriteBatch.Draw(
             pixel,
-            new Rectangle((int)screen.X + 3, (int)screen.Y + 13, 11, 2),
+            new Rectangle((int)screen.X + 1, (int)screen.Y + 14, 16, 2),
             new Color(35, 118, 178, 150)
         );
 
