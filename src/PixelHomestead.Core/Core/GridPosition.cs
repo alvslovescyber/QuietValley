@@ -15,7 +15,7 @@ public readonly record struct GridPosition(int X, int Y)
             Direction.Down => this + new GridPosition(0, 1),
             Direction.Left => this + new GridPosition(-1, 0),
             Direction.Right => this + new GridPosition(1, 0),
-            _ => this
+            _ => this,
         };
     }
 }

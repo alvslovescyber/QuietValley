@@ -11,10 +11,7 @@ public sealed class GameWorld
     {
         if (width <= 0 || height <= 0)
         {
-            throw new ArgumentOutOfRangeException(
-                nameof(width),
-                "World dimensions must be positive."
-            );
+            throw new ArgumentOutOfRangeException(nameof(width), "World dimensions must be positive.");
         }
 
         Width = width;
@@ -36,9 +33,7 @@ public sealed class GameWorld
 
     public Tile GetTile(GridPosition position)
     {
-        return IsInside(position)
-            ? _tiles[position.X, position.Y]
-            : new Tile { Type = TileType.Tree };
+        return IsInside(position) ? _tiles[position.X, position.Y] : new Tile { Type = TileType.Tree };
     }
 
     public void SetTile(GridPosition position, TileType tileType)
@@ -99,12 +94,7 @@ public sealed class GameWorld
         {
             for (int tileX = 0; tileX < world.Width; tileX++)
             {
-                if (
-                    tileX <= 1
-                    || tileY <= 1
-                    || tileX >= world.Width - 2
-                    || tileY >= world.Height - 2
-                )
+                if (tileX <= 1 || tileY <= 1 || tileX >= world.Width - 2 || tileY >= world.Height - 2)
                 {
                     world.SetTile(new GridPosition(tileX, tileY), TileType.Tree);
                 }
@@ -133,8 +123,7 @@ public sealed class GameWorld
         {
             for (int tileX = 30; tileX <= 43; tileX++)
             {
-                double normalized =
-                    Math.Pow((tileX - 36.5) / 7.0, 2) + Math.Pow((tileY - 16.0) / 7.0, 2);
+                double normalized = Math.Pow((tileX - 36.5) / 7.0, 2) + Math.Pow((tileY - 16.0) / 7.0, 2);
                 if (normalized < 1.0)
                 {
                     world.SetTile(new GridPosition(tileX, tileY), TileType.Water);
@@ -244,15 +233,7 @@ public sealed class GameWorld
             world.SetTile(mushroom, TileType.Mushroom);
         }
 
-        GridPosition[] stones =
-        [
-            new(27, 15),
-            new(28, 14),
-            new(29, 13),
-            new(41, 12),
-            new(42, 12),
-            new(22, 26),
-        ];
+        GridPosition[] stones = [new(27, 15), new(28, 14), new(29, 13), new(41, 12), new(42, 12), new(22, 26)];
         foreach (GridPosition stone in stones)
         {
             world.SetTile(stone, TileType.Stone);

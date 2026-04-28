@@ -10,10 +10,19 @@ public sealed class FishingSystem
     private readonly Random _random = new();
     private readonly string[] _fishIds = ["small_fish", "pond_carp", "river_minnow", "golden_fish"];
 
-    public string? TryCatchFish(GameWorld world, GridPosition playerPosition, Direction facing, Inventory inventory, ContentDatabase content, EnergySystem energy)
+    public string? TryCatchFish(
+        GameWorld world,
+        GridPosition playerPosition,
+        Direction facing,
+        Inventory inventory,
+        ContentDatabase content,
+        EnergySystem energy
+    )
     {
         GridPosition target = playerPosition.Neighbor(facing);
-        bool nearWater = world.GetTile(target).IsWater || AdjacentPositions(playerPosition).Any(position => world.GetTile(position).IsWater);
+        bool nearWater =
+            world.GetTile(target).IsWater
+            || AdjacentPositions(playerPosition).Any(position => world.GetTile(position).IsWater);
         if (!nearWater || !energy.Spend(3))
         {
             return null;

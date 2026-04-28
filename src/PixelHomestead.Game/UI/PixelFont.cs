@@ -51,7 +51,7 @@ public sealed class PixelFont
         [':'] = ["00000", "00100", "00100", "00000", "00100", "00100", "00000"],
         ['-'] = ["00000", "00000", "00000", "11111", "00000", "00000", "00000"],
         ['/'] = ["00001", "00010", "00010", "00100", "01000", "01000", "10000"],
-        [' '] = ["00000", "00000", "00000", "00000", "00000", "00000", "00000"]
+        [' '] = ["00000", "00000", "00000", "00000", "00000", "00000", "00000"],
     };
 
     public PixelFont(Texture2D pixel)
@@ -80,7 +80,11 @@ public sealed class PixelFont
                 {
                     if (glyph[row][column] == '1')
                     {
-                        spriteBatch.Draw(_pixel, new Rectangle(cursorX + column * scale, cursorY + row * scale, scale, scale), color);
+                        spriteBatch.Draw(
+                            _pixel,
+                            new Rectangle(cursorX + column * scale, cursorY + row * scale, scale, scale),
+                            color
+                        );
                     }
                 }
             }

@@ -7,5 +7,5 @@ public enum ToolKind
     WateringCan,
     Axe,
     Pickaxe,
-    FishingRod
+    FishingRod,
 }

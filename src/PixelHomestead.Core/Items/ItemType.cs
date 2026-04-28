@@ -6,5 +6,5 @@ public enum ItemType
     Seed,
     Crop,
     Fish,
-    Resource
+    Resource,
 }

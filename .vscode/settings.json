@@ -1,0 +1,10 @@
+{
+  "csharp.format.enable": false,
+  "csharpier.formatOnSave": true,
+  "dotnet.defaultSolution": "PixelHomestead.sln",
+  "editor.formatOnSave": true,
+  "files.exclude": {
+    "**/bin": true,
+    "**/obj": true
+  }
+}

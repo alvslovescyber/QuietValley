@@ -1,0 +1,50 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build game",
+      "type": "process",
+      "command": "dotnet",
+      "args": [
+        "build",
+        "${workspaceFolder}/src/PixelHomestead.Game/PixelHomestead.Game.csproj"
+      ],
+      "problemMatcher": "$msCompile",
+      "group": "build"
+    },
+    {
+      "label": "test",
+      "type": "process",
+      "command": "dotnet",
+      "args": [
+        "test",
+        "${workspaceFolder}/tests/PixelHomestead.SmokeTests/PixelHomestead.SmokeTests.csproj",
+        "--collect:XPlat Code Coverage"
+      ],
+      "problemMatcher": "$msCompile",
+      "group": "test"
+    },
+    {
+      "label": "format check",
+      "type": "process",
+      "command": "dotnet",
+      "args": [
+        "csharpier",
+        "check",
+        "${workspaceFolder}"
+      ],
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "format",
+      "type": "process",
+      "command": "dotnet",
+      "args": [
+        "csharpier",
+        "format",
+        "${workspaceFolder}"
+      ],
+      "problemMatcher": []
+    }
+  ]
+}

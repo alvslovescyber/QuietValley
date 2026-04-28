@@ -31,7 +31,13 @@ public sealed class FarmingSystem
         return true;
     }
 
-    public bool Plant(GameWorld world, GridPosition target, Inventory inventory, string seedItemId, ContentDatabase content)
+    public bool Plant(
+        GameWorld world,
+        GridPosition target,
+        Inventory inventory,
+        string seedItemId,
+        ContentDatabase content
+    )
     {
         if (world.GetTile(target).Type != TileType.Soil || world.HasCrop(target))
         {
@@ -44,7 +50,15 @@ public sealed class FarmingSystem
             return false;
         }
 
-        world.SetCrop(target, new CropState { CropId = crop.Id, GrowthProgress = 0, WateredToday = false });
+        world.SetCrop(
+            target,
+            new CropState
+            {
+                CropId = crop.Id,
+                GrowthProgress = 0,
+                WateredToday = false,
+            }
+        );
         return true;
     }
 
@@ -79,9 +93,10 @@ public sealed class FarmingSystem
                 continue;
             }
 
-            int growthProgress = crop.RequiresWater && !cropState.WateredToday
-                ? cropState.GrowthProgress
-                : Math.Min(crop.GrowthDays, cropState.GrowthProgress + 1);
+            int growthProgress =
+                crop.RequiresWater && !cropState.WateredToday
+                    ? cropState.GrowthProgress
+                    : Math.Min(crop.GrowthDays, cropState.GrowthProgress + 1);
 
             world.SetCrop(position, cropState with { GrowthProgress = growthProgress, WateredToday = false });
         }

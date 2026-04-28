@@ -17,5 +17,5 @@ public enum TileType
     Fence,
     House,
     ShippingBox,
-    SleepSpot
+    SleepSpot,
 }

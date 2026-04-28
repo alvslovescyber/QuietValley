@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  build-test-format:
+    name: Build, Test, Format
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Restore tools
+        run: dotnet tool restore
+
+      - name: Restore packages
+        run: dotnet restore PixelHomestead.sln
+
+      - name: CSharpier check
+        run: dotnet csharpier check .
+
+      - name: Build game
+        run: dotnet build src/PixelHomestead.Game/PixelHomestead.Game.csproj --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test tests/PixelHomestead.SmokeTests/PixelHomestead.SmokeTests.csproj --configuration Release --no-restore --collect:"XPlat Code Coverage" --logger trx

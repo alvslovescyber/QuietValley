@@ -12,7 +12,7 @@ public sealed class SaveManager
     private static readonly JsonSerializerOptions SerializerOptions = new()
     {
         WriteIndented = true,
-        Converters = { new JsonStringEnumConverter() }
+        Converters = { new JsonStringEnumConverter() },
     };
 
     public string SavePath { get; }
@@ -72,24 +72,38 @@ public sealed class SaveManager
                 MinutesSinceMidnight = state.Time.MinutesSinceMidnight,
                 Energy = state.Energy.CurrentEnergy,
                 Coins = state.Economy.Coins,
-                Inventory = state.Inventory.Slots
-                    .Select((slot, index) => new SaveInventorySlot { Index = index, ItemId = slot.ItemId, Quantity = slot.Quantity })
+                Inventory = state
+                    .Inventory.Slots.Select(
+                        (slot, index) =>
+                            new SaveInventorySlot
+                            {
+                                Index = index,
+                                ItemId = slot.ItemId,
+                                Quantity = slot.Quantity,
+                            }
+                    )
                     .Where(slot => !string.IsNullOrWhiteSpace(slot.ItemId) && slot.Quantity > 0)
                     .ToList(),
-                TileOverrides = state.World.Tiles()
+                TileOverrides = state
+                    .World.Tiles()
                     .Where(entry => entry.Tile.Type != TileType.Grass)
-                    .Select(entry => new SaveTile { X = entry.Position.X, Y = entry.Position.Y, Type = entry.Tile.Type })
+                    .Select(entry => new SaveTile
+                    {
+                        X = entry.Position.X,
+                        Y = entry.Position.Y,
+                        Type = entry.Tile.Type,
+                    })
                     .ToList(),
-                Crops = state.World.Crops
-                    .Select(entry => new SaveCrop
+                Crops = state
+                    .World.Crops.Select(entry => new SaveCrop
                     {
                         X = entry.Key.X,
                         Y = entry.Key.Y,
                         CropId = entry.Value.CropId,
                         GrowthProgress = entry.Value.GrowthProgress,
-                        WateredToday = entry.Value.WateredToday
+                        WateredToday = entry.Value.WateredToday,
                     })
-                    .ToList()
+                    .ToList(),
             };
         }
 
@@ -125,8 +139,9 @@ public sealed class SaveManager
                     {
                         CropId = crop.CropId,
                         GrowthProgress = crop.GrowthProgress,
-                        WateredToday = crop.WateredToday
-                    });
+                        WateredToday = crop.WateredToday,
+                    }
+                );
             }
 
             return state;

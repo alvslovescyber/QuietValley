@@ -12,8 +12,23 @@ dotnet run --project src/PixelHomestead.Game/PixelHomestead.Game.csproj
 
 ```bash
 dotnet build src/PixelHomestead.Game/PixelHomestead.Game.csproj
-dotnet run --project tests/PixelHomestead.SmokeTests/PixelHomestead.SmokeTests.csproj
+dotnet test tests/PixelHomestead.SmokeTests/PixelHomestead.SmokeTests.csproj
 ```
+
+## Developer Workflow
+
+```bash
+dotnet tool restore
+dotnet csharpier format .
+dotnet csharpier check .
+./scripts/check.sh
+```
+
+- VS Code: use `Run and Debug` → `Run Pixel Homestead`.
+- JetBrains Rider: use the checked-in `.run/Pixel Homestead.run.xml` run configuration.
+- Tests use xUnit with `Microsoft.NET.Test.Sdk` and `coverlet.collector`.
+- Formatting uses CSharpier. ESLint is intentionally not configured yet because this repository has no JavaScript or TypeScript surface; add it when a web/tooling package exists.
+- CI runs on GitHub Actions for restore, CSharpier, build, and xUnit tests with coverage.
 
 ## Controls
 

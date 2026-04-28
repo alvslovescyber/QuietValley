@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "Pixel Homestead": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}

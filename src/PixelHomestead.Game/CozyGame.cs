@@ -147,18 +147,7 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
             return;
         }
 
-        Keys[] hotbarKeys =
-        [
-            Keys.D1,
-            Keys.D2,
-            Keys.D3,
-            Keys.D4,
-            Keys.D5,
-            Keys.D6,
-            Keys.D7,
-            Keys.D8,
-            Keys.D9,
-        ];
+        Keys[] hotbarKeys = [Keys.D1, Keys.D2, Keys.D3, Keys.D4, Keys.D5, Keys.D6, Keys.D7, Keys.D8, Keys.D9];
         for (int hotbarIndex = 0; hotbarIndex < HotbarSlots; hotbarIndex++)
         {
             if (_input.Pressed(hotbarKeys[hotbarIndex]))
@@ -192,8 +181,7 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
         _playerVisualPosition = Vector2.Lerp(_playerVisualPosition, targetPlayerPosition, 0.35f);
 
         Vector2 targetCamera =
-            _playerVisualPosition
-            - new Vector2(VirtualWidth / 2f - TileSize / 2f, VirtualHeight / 2f - TileSize / 2f);
+            _playerVisualPosition - new Vector2(VirtualWidth / 2f - TileSize / 2f, VirtualHeight / 2f - TileSize / 2f);
         float maxCameraX = state.World.Width * TileSize - VirtualWidth;
         float maxCameraY = state.World.Height * TileSize - VirtualHeight;
         targetCamera.X = Math.Clamp(targetCamera.X, 0, Math.Max(0, maxCameraX));
@@ -340,13 +328,7 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
             ToolKind.Axe => ClearSimpleObstacle(state, target, TileType.Bush, 3),
             ToolKind.Pickaxe => false,
             _ => selectedItem.Type == ItemType.Seed
-                && state.Farming.Plant(
-                    state.World,
-                    target,
-                    state.Inventory,
-                    selectedItem.Id,
-                    state.Content
-                ),
+                && state.Farming.Plant(state.World, target, state.Inventory, selectedItem.Id, state.Content),
         };
 
         state.StatusMessage = acted ? $"{selectedItem.DisplayName} used." : "Nothing happened.";
@@ -371,12 +353,7 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
         return true;
     }
 
-    private static bool ClearSimpleObstacle(
-        GameState state,
-        GridPosition target,
-        TileType obstacleType,
-        int energyCost
-    )
+    private static bool ClearSimpleObstacle(GameState state, GridPosition target, TileType obstacleType, int energyCost)
     {
         if (state.World.GetTile(target).Type != obstacleType || !state.Energy.Spend(energyCost))
         {
@@ -440,12 +417,7 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
             Rectangle destination = WorldRectangle(position);
             if (
                 !destination.Intersects(
-                    new Rectangle(
-                        -TileSize,
-                        -TileSize,
-                        VirtualWidth + TileSize * 2,
-                        VirtualHeight + TileSize * 2
-                    )
+                    new Rectangle(-TileSize, -TileSize, VirtualWidth + TileSize * 2, VirtualHeight + TileSize * 2)
                 )
             )
             {
@@ -463,24 +435,15 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
         DrawPlayer(spriteBatch);
     }
 
-    private void DrawTile(
-        SpriteBatch spriteBatch,
-        Rectangle destination,
-        TileType type,
-        GridPosition position
-    )
+    private void DrawTile(SpriteBatch spriteBatch, Rectangle destination, TileType type, GridPosition position)
     {
         Texture2D pixel = RequirePixel();
         Color baseColor = type switch
         {
-            TileType.Grass => (
-                (position.X * 7 + position.Y * 11) % 5 == 0 ? Palette.GrassLight : Palette.Grass
-            ),
+            TileType.Grass => ((position.X * 7 + position.Y * 11) % 5 == 0 ? Palette.GrassLight : Palette.Grass),
             TileType.Dirt => Palette.Dirt,
             TileType.Path => Palette.Path,
-            TileType.Water => (
-                (position.X + position.Y) % 3 == 0 ? Palette.Water : Palette.WaterDeep
-            ),
+            TileType.Water => ((position.X + position.Y) % 3 == 0 ? Palette.Water : Palette.WaterDeep),
             TileType.Soil => Palette.Soil,
             TileType.TallGrass => Palette.Grass,
             TileType.Flower => Palette.GrassLight,
@@ -534,16 +497,8 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
         }
         else if (type == TileType.Dirt)
         {
-            spriteBatch.Draw(
-                pixel,
-                new Rectangle(destination.X + 2, destination.Y + 3, 3, 1),
-                new Color(211, 151, 70)
-            );
-            spriteBatch.Draw(
-                pixel,
-                new Rectangle(destination.X + 9, destination.Y + 12, 4, 1),
-                new Color(130, 81, 40)
-            );
+            spriteBatch.Draw(pixel, new Rectangle(destination.X + 2, destination.Y + 3, 3, 1), new Color(211, 151, 70));
+            spriteBatch.Draw(pixel, new Rectangle(destination.X + 9, destination.Y + 12, 4, 1), new Color(130, 81, 40));
         }
         else if (type == TileType.Path)
         {
@@ -551,16 +506,8 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
         }
         else if (type == TileType.Soil)
         {
-            spriteBatch.Draw(
-                pixel,
-                new Rectangle(destination.X + 2, destination.Y + 3, 12, 2),
-                new Color(143, 86, 44)
-            );
-            spriteBatch.Draw(
-                pixel,
-                new Rectangle(destination.X + 1, destination.Y + 8, 14, 2),
-                new Color(79, 48, 31)
-            );
+            spriteBatch.Draw(pixel, new Rectangle(destination.X + 2, destination.Y + 3, 12, 2), new Color(143, 86, 44));
+            spriteBatch.Draw(pixel, new Rectangle(destination.X + 1, destination.Y + 8, 14, 2), new Color(79, 48, 31));
             spriteBatch.Draw(
                 pixel,
                 new Rectangle(destination.X + 3, destination.Y + 13, 10, 1),
@@ -601,16 +548,8 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
         }
         else if (type == TileType.SleepSpot)
         {
-            spriteBatch.Draw(
-                pixel,
-                new Rectangle(destination.X + 1, destination.Y + 5, 14, 8),
-                Palette.ParchmentLight
-            );
-            spriteBatch.Draw(
-                pixel,
-                new Rectangle(destination.X + 1, destination.Y + 12, 14, 2),
-                Palette.ParchmentDark
-            );
+            spriteBatch.Draw(pixel, new Rectangle(destination.X + 1, destination.Y + 5, 14, 8), Palette.ParchmentLight);
+            spriteBatch.Draw(pixel, new Rectangle(destination.X + 1, destination.Y + 12, 14, 2), Palette.ParchmentDark);
             spriteBatch.Draw(
                 pixel,
                 new Rectangle(destination.X + 3, destination.Y + 7, 4, 3),
@@ -619,12 +558,7 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
         }
     }
 
-    private void DrawGroundDither(
-        SpriteBatch spriteBatch,
-        Rectangle destination,
-        GridPosition position,
-        TileType type
-    )
+    private void DrawGroundDither(SpriteBatch spriteBatch, Rectangle destination, GridPosition position, TileType type)
     {
         Texture2D pixel = RequirePixel();
         int seed = position.X * 37 + position.Y * 73;
@@ -635,11 +569,7 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
                 new Rectangle(destination.X + 2 + seed % 4, destination.Y + 2 + seed % 5, 1, 1),
                 new Color(162, 230, 93)
             );
-            spriteBatch.Draw(
-                pixel,
-                new Rectangle(destination.X + 10, destination.Y + 11, 1, 1),
-                Palette.GrassDark
-            );
+            spriteBatch.Draw(pixel, new Rectangle(destination.X + 10, destination.Y + 11, 1, 1), Palette.GrassDark);
         }
         else if (type is TileType.Path or TileType.Dirt)
         {
@@ -656,12 +586,7 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
         }
     }
 
-    private void DrawGrassTufts(
-        SpriteBatch spriteBatch,
-        Rectangle destination,
-        GridPosition position,
-        bool dense
-    )
+    private void DrawGrassTufts(SpriteBatch spriteBatch, Rectangle destination, GridPosition position, bool dense)
     {
         Texture2D pixel = RequirePixel();
         Color dark = Palette.GrassDark;
@@ -670,21 +595,9 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
         spriteBatch.Draw(pixel, new Rectangle(destination.X + 11, destination.Y + 5, 1, 4), dark);
         if (dense)
         {
-            spriteBatch.Draw(
-                pixel,
-                new Rectangle(destination.X + 7, destination.Y + 9, 1, 6),
-                new Color(41, 154, 67)
-            );
-            spriteBatch.Draw(
-                pixel,
-                new Rectangle(destination.X + 13, destination.Y + 8, 1, 5),
-                new Color(41, 154, 67)
-            );
-            spriteBatch.Draw(
-                pixel,
-                new Rectangle(destination.X + 1, destination.Y + 6, 1, 5),
-                new Color(41, 154, 67)
-            );
+            spriteBatch.Draw(pixel, new Rectangle(destination.X + 7, destination.Y + 9, 1, 6), new Color(41, 154, 67));
+            spriteBatch.Draw(pixel, new Rectangle(destination.X + 13, destination.Y + 8, 1, 5), new Color(41, 154, 67));
+            spriteBatch.Draw(pixel, new Rectangle(destination.X + 1, destination.Y + 6, 1, 5), new Color(41, 154, 67));
         }
     }
 
@@ -697,282 +610,106 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
         spriteBatch.Draw(pixel, new Rectangle(x + 1, y + 1, 1, 1), Palette.Highlight);
     }
 
-    private void DrawPathStones(
-        SpriteBatch spriteBatch,
-        Rectangle destination,
-        GridPosition position
-    )
+    private void DrawPathStones(SpriteBatch spriteBatch, Rectangle destination, GridPosition position)
     {
         Texture2D pixel = RequirePixel();
         Color stone = new(182, 169, 126);
         spriteBatch.Draw(pixel, new Rectangle(destination.X + 2, destination.Y + 4, 5, 3), stone);
-        spriteBatch.Draw(
-            pixel,
-            new Rectangle(destination.X + 9, destination.Y + 9, 5, 4),
-            new Color(164, 151, 111)
-        );
+        spriteBatch.Draw(pixel, new Rectangle(destination.X + 9, destination.Y + 9, 5, 4), new Color(164, 151, 111));
         if ((position.X + position.Y) % 2 == 0)
         {
-            spriteBatch.Draw(
-                pixel,
-                new Rectangle(destination.X + 5, destination.Y + 13, 4, 2),
-                stone
-            );
+            spriteBatch.Draw(pixel, new Rectangle(destination.X + 5, destination.Y + 13, 4, 2), stone);
         }
     }
 
     private void DrawTree(SpriteBatch spriteBatch, Rectangle destination)
     {
         Texture2D pixel = RequirePixel();
-        spriteBatch.Draw(
-            pixel,
-            new Rectangle(destination.X + 6, destination.Y + 8, 4, 8),
-            Palette.WoodDark
-        );
-        spriteBatch.Draw(
-            pixel,
-            new Rectangle(destination.X + 7, destination.Y + 8, 2, 8),
-            Palette.WoodLight
-        );
-        spriteBatch.Draw(
-            pixel,
-            new Rectangle(destination.X + 1, destination.Y + 4, 14, 8),
-            Palette.GrassDark
-        );
-        spriteBatch.Draw(
-            pixel,
-            new Rectangle(destination.X + 3, destination.Y, 10, 8),
-            new Color(30, 139, 75)
-        );
-        spriteBatch.Draw(
-            pixel,
-            new Rectangle(destination.X + 6, destination.Y - 3, 6, 7),
-            new Color(59, 177, 83)
-        );
-        spriteBatch.Draw(
-            pixel,
-            new Rectangle(destination.X + 3, destination.Y + 5, 3, 2),
-            new Color(87, 206, 89)
-        );
-        spriteBatch.Draw(
-            pixel,
-            new Rectangle(destination.X + 11, destination.Y + 7, 2, 2),
-            new Color(23, 108, 61)
-        );
+        spriteBatch.Draw(pixel, new Rectangle(destination.X + 6, destination.Y + 8, 4, 8), Palette.WoodDark);
+        spriteBatch.Draw(pixel, new Rectangle(destination.X + 7, destination.Y + 8, 2, 8), Palette.WoodLight);
+        spriteBatch.Draw(pixel, new Rectangle(destination.X + 1, destination.Y + 4, 14, 8), Palette.GrassDark);
+        spriteBatch.Draw(pixel, new Rectangle(destination.X + 3, destination.Y, 10, 8), new Color(30, 139, 75));
+        spriteBatch.Draw(pixel, new Rectangle(destination.X + 6, destination.Y - 3, 6, 7), new Color(59, 177, 83));
+        spriteBatch.Draw(pixel, new Rectangle(destination.X + 3, destination.Y + 5, 3, 2), new Color(87, 206, 89));
+        spriteBatch.Draw(pixel, new Rectangle(destination.X + 11, destination.Y + 7, 2, 2), new Color(23, 108, 61));
     }
 
     private void DrawBush(SpriteBatch spriteBatch, Rectangle destination)
     {
         Texture2D pixel = RequirePixel();
-        spriteBatch.Draw(
-            pixel,
-            new Rectangle(destination.X + 2, destination.Y + 6, 12, 7),
-            new Color(24, 127, 72)
-        );
-        spriteBatch.Draw(
-            pixel,
-            new Rectangle(destination.X + 4, destination.Y + 3, 8, 7),
-            new Color(45, 168, 82)
-        );
-        spriteBatch.Draw(
-            pixel,
-            new Rectangle(destination.X + 2, destination.Y + 8, 3, 2),
-            new Color(83, 207, 88)
-        );
+        spriteBatch.Draw(pixel, new Rectangle(destination.X + 2, destination.Y + 6, 12, 7), new Color(24, 127, 72));
+        spriteBatch.Draw(pixel, new Rectangle(destination.X + 4, destination.Y + 3, 8, 7), new Color(45, 168, 82));
+        spriteBatch.Draw(pixel, new Rectangle(destination.X + 2, destination.Y + 8, 3, 2), new Color(83, 207, 88));
         DrawFlower(spriteBatch, destination.X + 10, destination.Y + 6, Palette.FlowerPink);
     }
 
     private void DrawMushroom(SpriteBatch spriteBatch, Rectangle destination)
     {
         Texture2D pixel = RequirePixel();
-        spriteBatch.Draw(
-            pixel,
-            new Rectangle(destination.X + 6, destination.Y + 7, 5, 9),
-            Palette.MushroomStem
-        );
-        spriteBatch.Draw(
-            pixel,
-            new Rectangle(destination.X + 2, destination.Y + 3, 13, 6),
-            Palette.MushroomCap
-        );
-        spriteBatch.Draw(
-            pixel,
-            new Rectangle(destination.X + 4, destination.Y + 1, 9, 4),
-            new Color(227, 102, 122)
-        );
-        spriteBatch.Draw(
-            pixel,
-            new Rectangle(destination.X + 5, destination.Y + 4, 2, 2),
-            Palette.FlowerWhite
-        );
-        spriteBatch.Draw(
-            pixel,
-            new Rectangle(destination.X + 10, destination.Y + 3, 2, 2),
-            Palette.FlowerWhite
-        );
-        spriteBatch.Draw(
-            pixel,
-            new Rectangle(destination.X + 12, destination.Y + 7, 2, 1),
-            new Color(155, 50, 73)
-        );
+        spriteBatch.Draw(pixel, new Rectangle(destination.X + 6, destination.Y + 7, 5, 9), Palette.MushroomStem);
+        spriteBatch.Draw(pixel, new Rectangle(destination.X + 2, destination.Y + 3, 13, 6), Palette.MushroomCap);
+        spriteBatch.Draw(pixel, new Rectangle(destination.X + 4, destination.Y + 1, 9, 4), new Color(227, 102, 122));
+        spriteBatch.Draw(pixel, new Rectangle(destination.X + 5, destination.Y + 4, 2, 2), Palette.FlowerWhite);
+        spriteBatch.Draw(pixel, new Rectangle(destination.X + 10, destination.Y + 3, 2, 2), Palette.FlowerWhite);
+        spriteBatch.Draw(pixel, new Rectangle(destination.X + 12, destination.Y + 7, 2, 1), new Color(155, 50, 73));
     }
 
     private void DrawStone(SpriteBatch spriteBatch, Rectangle destination)
     {
         Texture2D pixel = RequirePixel();
-        spriteBatch.Draw(
-            pixel,
-            new Rectangle(destination.X + 3, destination.Y + 7, 10, 6),
-            new Color(119, 129, 128)
-        );
-        spriteBatch.Draw(
-            pixel,
-            new Rectangle(destination.X + 5, destination.Y + 5, 7, 4),
-            Palette.Rock
-        );
-        spriteBatch.Draw(
-            pixel,
-            new Rectangle(destination.X + 6, destination.Y + 6, 4, 1),
-            new Color(195, 199, 188)
-        );
+        spriteBatch.Draw(pixel, new Rectangle(destination.X + 3, destination.Y + 7, 10, 6), new Color(119, 129, 128));
+        spriteBatch.Draw(pixel, new Rectangle(destination.X + 5, destination.Y + 5, 7, 4), Palette.Rock);
+        spriteBatch.Draw(pixel, new Rectangle(destination.X + 6, destination.Y + 6, 4, 1), new Color(195, 199, 188));
     }
 
     private void DrawBarrel(SpriteBatch spriteBatch, Rectangle destination)
     {
         Texture2D pixel = RequirePixel();
-        spriteBatch.Draw(
-            pixel,
-            new Rectangle(destination.X + 4, destination.Y + 3, 8, 11),
-            Palette.WoodDark
-        );
-        spriteBatch.Draw(
-            pixel,
-            new Rectangle(destination.X + 5, destination.Y + 3, 6, 11),
-            Palette.Wood
-        );
-        spriteBatch.Draw(
-            pixel,
-            new Rectangle(destination.X + 4, destination.Y + 5, 8, 1),
-            Palette.ParchmentDark
-        );
-        spriteBatch.Draw(
-            pixel,
-            new Rectangle(destination.X + 4, destination.Y + 11, 8, 1),
-            Palette.ParchmentDark
-        );
+        spriteBatch.Draw(pixel, new Rectangle(destination.X + 4, destination.Y + 3, 8, 11), Palette.WoodDark);
+        spriteBatch.Draw(pixel, new Rectangle(destination.X + 5, destination.Y + 3, 6, 11), Palette.Wood);
+        spriteBatch.Draw(pixel, new Rectangle(destination.X + 4, destination.Y + 5, 8, 1), Palette.ParchmentDark);
+        spriteBatch.Draw(pixel, new Rectangle(destination.X + 4, destination.Y + 11, 8, 1), Palette.ParchmentDark);
     }
 
     private void DrawFence(SpriteBatch spriteBatch, Rectangle destination)
     {
         Texture2D pixel = RequirePixel();
-        spriteBatch.Draw(
-            pixel,
-            new Rectangle(destination.X + 2, destination.Y + 2, 3, 13),
-            Palette.WoodDark
-        );
-        spriteBatch.Draw(
-            pixel,
-            new Rectangle(destination.X + 11, destination.Y + 2, 3, 13),
-            Palette.WoodDark
-        );
-        spriteBatch.Draw(
-            pixel,
-            new Rectangle(destination.X + 3, destination.Y + 3, 1, 9),
-            Palette.WoodLight
-        );
-        spriteBatch.Draw(
-            pixel,
-            new Rectangle(destination.X + 12, destination.Y + 3, 1, 9),
-            Palette.WoodLight
-        );
-        spriteBatch.Draw(
-            pixel,
-            new Rectangle(destination.X, destination.Y + 6, 16, 3),
-            Palette.Wood
-        );
-        spriteBatch.Draw(
-            pixel,
-            new Rectangle(destination.X, destination.Y + 11, 16, 2),
-            Palette.WoodLight
-        );
+        spriteBatch.Draw(pixel, new Rectangle(destination.X + 2, destination.Y + 2, 3, 13), Palette.WoodDark);
+        spriteBatch.Draw(pixel, new Rectangle(destination.X + 11, destination.Y + 2, 3, 13), Palette.WoodDark);
+        spriteBatch.Draw(pixel, new Rectangle(destination.X + 3, destination.Y + 3, 1, 9), Palette.WoodLight);
+        spriteBatch.Draw(pixel, new Rectangle(destination.X + 12, destination.Y + 3, 1, 9), Palette.WoodLight);
+        spriteBatch.Draw(pixel, new Rectangle(destination.X, destination.Y + 6, 16, 3), Palette.Wood);
+        spriteBatch.Draw(pixel, new Rectangle(destination.X, destination.Y + 11, 16, 2), Palette.WoodLight);
     }
 
-    private void DrawHouseTile(
-        SpriteBatch spriteBatch,
-        Rectangle destination,
-        GridPosition position
-    )
+    private void DrawHouseTile(SpriteBatch spriteBatch, Rectangle destination, GridPosition position)
     {
         Texture2D pixel = RequirePixel();
         bool roof = position.Y <= 9;
         if (roof)
         {
             spriteBatch.Draw(pixel, destination, Palette.RoofRed);
-            spriteBatch.Draw(
-                pixel,
-                new Rectangle(destination.X, destination.Y + 3, 16, 2),
-                new Color(226, 101, 41)
-            );
-            spriteBatch.Draw(
-                pixel,
-                new Rectangle(destination.X + 1, destination.Y + 8, 14, 2),
-                new Color(145, 51, 35)
-            );
-            spriteBatch.Draw(
-                pixel,
-                new Rectangle(destination.X + 4, destination.Y + 1, 5, 1),
-                new Color(242, 133, 54)
-            );
+            spriteBatch.Draw(pixel, new Rectangle(destination.X, destination.Y + 3, 16, 2), new Color(226, 101, 41));
+            spriteBatch.Draw(pixel, new Rectangle(destination.X + 1, destination.Y + 8, 14, 2), new Color(145, 51, 35));
+            spriteBatch.Draw(pixel, new Rectangle(destination.X + 4, destination.Y + 1, 5, 1), new Color(242, 133, 54));
         }
         else
         {
             spriteBatch.Draw(pixel, destination, Palette.Wood);
-            spriteBatch.Draw(
-                pixel,
-                new Rectangle(destination.X + 2, destination.Y, 2, 16),
-                Palette.WoodLight
-            );
-            spriteBatch.Draw(
-                pixel,
-                new Rectangle(destination.X + 8, destination.Y, 1, 16),
-                Palette.WoodDark
-            );
-            spriteBatch.Draw(
-                pixel,
-                new Rectangle(destination.X + 1, destination.Y + 5, 14, 1),
-                Palette.WoodLight
-            );
-            spriteBatch.Draw(
-                pixel,
-                new Rectangle(destination.X + 4, destination.Y + 10, 7, 6),
-                Palette.WoodDark
-            );
+            spriteBatch.Draw(pixel, new Rectangle(destination.X + 2, destination.Y, 2, 16), Palette.WoodLight);
+            spriteBatch.Draw(pixel, new Rectangle(destination.X + 8, destination.Y, 1, 16), Palette.WoodDark);
+            spriteBatch.Draw(pixel, new Rectangle(destination.X + 1, destination.Y + 5, 14, 1), Palette.WoodLight);
+            spriteBatch.Draw(pixel, new Rectangle(destination.X + 4, destination.Y + 10, 7, 6), Palette.WoodDark);
         }
     }
 
     private void DrawShippingBox(SpriteBatch spriteBatch, Rectangle destination)
     {
         Texture2D pixel = RequirePixel();
-        spriteBatch.Draw(
-            pixel,
-            new Rectangle(destination.X + 2, destination.Y + 3, 12, 11),
-            Palette.WoodDark
-        );
-        spriteBatch.Draw(
-            pixel,
-            new Rectangle(destination.X + 3, destination.Y + 4, 10, 9),
-            Palette.Wood
-        );
-        spriteBatch.Draw(
-            pixel,
-            new Rectangle(destination.X + 4, destination.Y + 5, 8, 2),
-            Palette.Highlight
-        );
-        spriteBatch.Draw(
-            pixel,
-            new Rectangle(destination.X + 5, destination.Y + 9, 6, 1),
-            Palette.WoodLight
-        );
+        spriteBatch.Draw(pixel, new Rectangle(destination.X + 2, destination.Y + 3, 12, 11), Palette.WoodDark);
+        spriteBatch.Draw(pixel, new Rectangle(destination.X + 3, destination.Y + 4, 10, 9), Palette.Wood);
+        spriteBatch.Draw(pixel, new Rectangle(destination.X + 4, destination.Y + 5, 8, 2), Palette.Highlight);
+        spriteBatch.Draw(pixel, new Rectangle(destination.X + 5, destination.Y + 9, 6, 1), Palette.WoodLight);
     }
 
     private void DrawCrop(SpriteBatch spriteBatch, Rectangle destination, CropState cropState)
@@ -980,29 +717,16 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
         Texture2D pixel = RequirePixel();
         GameState state = RequireState();
         CropDefinition crop = state.Content.Crops[cropState.CropId];
-        float growthRatio =
-            crop.GrowthDays <= 0 ? 1 : cropState.GrowthProgress / (float)crop.GrowthDays;
+        float growthRatio = crop.GrowthDays <= 0 ? 1 : cropState.GrowthProgress / (float)crop.GrowthDays;
         int height =
             growthRatio < 0.34f ? 4
             : growthRatio < 0.67f ? 8
             : 12;
         Color color = growthRatio >= 1 ? new Color(231, 82, 68) : new Color(59, 166, 72);
 
-        spriteBatch.Draw(
-            pixel,
-            new Rectangle(destination.X + 5, destination.Y + 13, 6, 2),
-            new Color(68, 42, 26)
-        );
-        spriteBatch.Draw(
-            pixel,
-            new Rectangle(destination.X + 7, destination.Y + 14 - height, 2, height),
-            color
-        );
-        spriteBatch.Draw(
-            pixel,
-            new Rectangle(destination.X + 5, destination.Y + 12 - height / 2, 6, 3),
-            color
-        );
+        spriteBatch.Draw(pixel, new Rectangle(destination.X + 5, destination.Y + 13, 6, 2), new Color(68, 42, 26));
+        spriteBatch.Draw(pixel, new Rectangle(destination.X + 7, destination.Y + 14 - height, 2, height), color);
+        spriteBatch.Draw(pixel, new Rectangle(destination.X + 5, destination.Y + 12 - height / 2, 6, 3), color);
         spriteBatch.Draw(
             pixel,
             new Rectangle(destination.X + 10, destination.Y + 11 - height / 2, 3, 2),
@@ -1010,30 +734,14 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
         );
         if (growthRatio >= 1)
         {
-            spriteBatch.Draw(
-                pixel,
-                new Rectangle(destination.X + 6, destination.Y + 7, 4, 4),
-                new Color(244, 113, 76)
-            );
-            spriteBatch.Draw(
-                pixel,
-                new Rectangle(destination.X + 7, destination.Y + 8, 1, 1),
-                Palette.Highlight
-            );
+            spriteBatch.Draw(pixel, new Rectangle(destination.X + 6, destination.Y + 7, 4, 4), new Color(244, 113, 76));
+            spriteBatch.Draw(pixel, new Rectangle(destination.X + 7, destination.Y + 8, 1, 1), Palette.Highlight);
         }
 
         if (cropState.WateredToday)
         {
-            spriteBatch.Draw(
-                pixel,
-                new Rectangle(destination.X + 2, destination.Y + 2, 3, 2),
-                Palette.WaterLight
-            );
-            spriteBatch.Draw(
-                pixel,
-                new Rectangle(destination.X + 12, destination.Y + 4, 2, 1),
-                Palette.WaterLight
-            );
+            spriteBatch.Draw(pixel, new Rectangle(destination.X + 2, destination.Y + 2, 3, 2), Palette.WaterLight);
+            spriteBatch.Draw(pixel, new Rectangle(destination.X + 12, destination.Y + 4, 2, 1), Palette.WaterLight);
         }
     }
 
@@ -1046,22 +754,14 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
             8,
             11
         );
-        spriteBatch.Draw(
-            pixel,
-            new Rectangle(body.X + 2, body.Y + 13, 6, 2),
-            new Color(40, 45, 48, 90)
-        );
+        spriteBatch.Draw(pixel, new Rectangle(body.X + 2, body.Y + 13, 6, 2), new Color(40, 45, 48, 90));
         spriteBatch.Draw(pixel, new Rectangle(body.X, body.Y - 3, 8, 3), new Color(218, 168, 58));
         spriteBatch.Draw(pixel, new Rectangle(body.X + 1, body.Y - 5, 6, 3), Palette.Highlight);
         spriteBatch.Draw(pixel, new Rectangle(body.X + 2, body.Y, 4, 4), new Color(247, 190, 142));
         spriteBatch.Draw(pixel, new Rectangle(body.X + 1, body.Y + 1, 1, 1), new Color(80, 46, 38));
         spriteBatch.Draw(pixel, new Rectangle(body.X + 5, body.Y + 1, 1, 1), new Color(80, 46, 38));
         spriteBatch.Draw(pixel, new Rectangle(body.X, body.Y + 4, 8, 7), new Color(66, 112, 199));
-        spriteBatch.Draw(
-            pixel,
-            new Rectangle(body.X + 1, body.Y + 5, 6, 2),
-            new Color(93, 149, 224)
-        );
+        spriteBatch.Draw(pixel, new Rectangle(body.X + 1, body.Y + 5, 6, 2), new Color(93, 149, 224));
         spriteBatch.Draw(pixel, new Rectangle(body.X + 1, body.Y + 11, 2, 3), Palette.WoodDark);
         spriteBatch.Draw(pixel, new Rectangle(body.X + 5, body.Y + 11, 2, 3), Palette.WoodDark);
     }
@@ -1090,13 +790,7 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
 
         DrawPanel(spriteBatch, new Rectangle(444, 8, 184, 50));
         DrawSunBadge(spriteBatch, new Rectangle(456, 19, 16, 16));
-        font.Draw(
-            spriteBatch,
-            $"Day {state.Time.Day} {state.Time.Season}",
-            new Vector2(480, 17),
-            Palette.Text,
-            1
-        );
+        font.Draw(spriteBatch, $"Day {state.Time.Day} {state.Time.Season}", new Vector2(480, 17), Palette.Text, 1);
         DrawCoin(spriteBatch, 480, 34);
         font.Draw(
             spriteBatch,
@@ -1140,11 +834,7 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
             if (!slot.IsEmpty && slot.ItemId is not null)
             {
                 ItemDefinition item = state.Content.Items[slot.ItemId];
-                DrawItemIcon(
-                    spriteBatch,
-                    item,
-                    new Rectangle(slotRectangle.X + 4, slotRectangle.Y + 4, 14, 14)
-                );
+                DrawItemIcon(spriteBatch, item, new Rectangle(slotRectangle.X + 4, slotRectangle.Y + 4, 14, 14));
                 if (slot.Quantity > 1)
                 {
                     font.Draw(
@@ -1181,11 +871,7 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
             if (!slot.IsEmpty && slot.ItemId is not null)
             {
                 ItemDefinition item = state.Content.Items[slot.ItemId];
-                DrawItemIcon(
-                    spriteBatch,
-                    item,
-                    new Rectangle(slotRectangle.X + 5, slotRectangle.Y + 5, 14, 14)
-                );
+                DrawItemIcon(spriteBatch, item, new Rectangle(slotRectangle.X + 5, slotRectangle.Y + 5, 14, 14));
                 if (slot.Quantity > 1)
                 {
                     font.Draw(
@@ -1207,13 +893,7 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
             font.Draw(spriteBatch, item.Description, new Vector2(136, 254), Palette.Text, 1);
         }
 
-        font.Draw(
-            spriteBatch,
-            "Tab/Esc closes. 1-9 selects hotbar.",
-            new Vector2(136, 280),
-            Palette.Text,
-            1
-        );
+        font.Draw(spriteBatch, "Tab/Esc closes. 1-9 selects hotbar.", new Vector2(136, 280), Palette.Text, 1);
     }
 
     private void DrawPause(SpriteBatch spriteBatch)
@@ -1255,20 +935,8 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
         DrawButton(spriteBatch, new Rectangle(224, 158, 56, 24), "2x");
         DrawButton(spriteBatch, new Rectangle(292, 158, 56, 24), "3x");
         DrawButton(spriteBatch, new Rectangle(360, 158, 56, 24), "4x");
-        font.Draw(
-            spriteBatch,
-            $"Current {_settingsScale}x",
-            new Vector2(224, 196),
-            Palette.Text,
-            1
-        );
-        font.Draw(
-            spriteBatch,
-            "Audio hooks are ready for assets.",
-            new Vector2(224, 222),
-            Palette.Text,
-            1
-        );
+        font.Draw(spriteBatch, $"Current {_settingsScale}x", new Vector2(224, 196), Palette.Text, 1);
+        font.Draw(spriteBatch, "Audio hooks are ready for assets.", new Vector2(224, 222), Palette.Text, 1);
         DrawButton(spriteBatch, new Rectangle(250, 266, 140, 28), "Back");
     }
 
@@ -1286,13 +954,7 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
             Palette.Text,
             1
         );
-        font.Draw(
-            spriteBatch,
-            "No copyrighted game assets included.",
-            new Vector2(166, 190),
-            Palette.Text,
-            1
-        );
+        font.Draw(spriteBatch, "No copyrighted game assets included.", new Vector2(166, 190), Palette.Text, 1);
         font.Draw(spriteBatch, "Click or Esc to return.", new Vector2(230, 220), Palette.Text, 1);
     }
 
@@ -1314,14 +976,9 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
             return;
         }
 
-        Vector2 promptPosition =
-            TileToWorld(state.Player.TilePosition) - _camera + new Vector2(-30, -18);
-        DrawPanel(
-            spriteBatch,
-            new Rectangle((int)promptPosition.X, (int)promptPosition.Y, 112, 18)
-        );
-        RequireFont()
-            .Draw(spriteBatch, prompt, promptPosition + new Vector2(6, 6), Palette.Text, 1);
+        Vector2 promptPosition = TileToWorld(state.Player.TilePosition) - _camera + new Vector2(-30, -18);
+        DrawPanel(spriteBatch, new Rectangle((int)promptPosition.X, (int)promptPosition.Y, 112, 18));
+        RequireFont().Draw(spriteBatch, prompt, promptPosition + new Vector2(6, 6), Palette.Text, 1);
     }
 
     private void DrawPanel(SpriteBatch spriteBatch, Rectangle rectangle)
@@ -1335,32 +992,17 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
         spriteBatch.Draw(pixel, rectangle, Palette.WoodDark);
         spriteBatch.Draw(
             pixel,
-            new Rectangle(
-                rectangle.X + 2,
-                rectangle.Y + 2,
-                rectangle.Width - 4,
-                rectangle.Height - 4
-            ),
+            new Rectangle(rectangle.X + 2, rectangle.Y + 2, rectangle.Width - 4, rectangle.Height - 4),
             Palette.Wood
         );
         spriteBatch.Draw(
             pixel,
-            new Rectangle(
-                rectangle.X + 5,
-                rectangle.Y + 5,
-                rectangle.Width - 10,
-                rectangle.Height - 10
-            ),
+            new Rectangle(rectangle.X + 5, rectangle.Y + 5, rectangle.Width - 10, rectangle.Height - 10),
             Palette.ParchmentDark
         );
         spriteBatch.Draw(
             pixel,
-            new Rectangle(
-                rectangle.X + 8,
-                rectangle.Y + 8,
-                rectangle.Width - 16,
-                rectangle.Height - 16
-            ),
+            new Rectangle(rectangle.X + 8, rectangle.Y + 8, rectangle.Width - 16, rectangle.Height - 16),
             Palette.Parchment
         );
         spriteBatch.Draw(
@@ -1368,26 +1010,10 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
             new Rectangle(rectangle.X + 10, rectangle.Y + 10, rectangle.Width - 20, 1),
             Palette.ParchmentLight
         );
-        spriteBatch.Draw(
-            pixel,
-            new Rectangle(rectangle.X + 5, rectangle.Y + 5, 4, 4),
-            Palette.Highlight
-        );
-        spriteBatch.Draw(
-            pixel,
-            new Rectangle(rectangle.Right - 9, rectangle.Y + 5, 4, 4),
-            Palette.Highlight
-        );
-        spriteBatch.Draw(
-            pixel,
-            new Rectangle(rectangle.X + 5, rectangle.Bottom - 9, 4, 4),
-            Palette.WoodLight
-        );
-        spriteBatch.Draw(
-            pixel,
-            new Rectangle(rectangle.Right - 9, rectangle.Bottom - 9, 4, 4),
-            Palette.WoodLight
-        );
+        spriteBatch.Draw(pixel, new Rectangle(rectangle.X + 5, rectangle.Y + 5, 4, 4), Palette.Highlight);
+        spriteBatch.Draw(pixel, new Rectangle(rectangle.Right - 9, rectangle.Y + 5, 4, 4), Palette.Highlight);
+        spriteBatch.Draw(pixel, new Rectangle(rectangle.X + 5, rectangle.Bottom - 9, 4, 4), Palette.WoodLight);
+        spriteBatch.Draw(pixel, new Rectangle(rectangle.Right - 9, rectangle.Bottom - 9, 4, 4), Palette.WoodLight);
     }
 
     private void DrawButton(SpriteBatch spriteBatch, Rectangle rectangle, string label)
@@ -1403,12 +1029,7 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
         spriteBatch.Draw(pixel, rectangle, hovered ? Palette.Highlight : Palette.WoodDark);
         spriteBatch.Draw(
             pixel,
-            new Rectangle(
-                rectangle.X + 2,
-                rectangle.Y + 2,
-                rectangle.Width - 4,
-                rectangle.Height - 4
-            ),
+            new Rectangle(rectangle.X + 2, rectangle.Y + 2, rectangle.Width - 4, rectangle.Height - 4),
             hovered ? new Color(246, 198, 102) : Palette.Wood
         );
         spriteBatch.Draw(
@@ -1418,12 +1039,7 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
         );
         spriteBatch.Draw(
             pixel,
-            new Rectangle(
-                rectangle.X + 6,
-                rectangle.Y + rectangle.Height - 6,
-                rectangle.Width - 12,
-                2
-            ),
+            new Rectangle(rectangle.X + 6, rectangle.Y + rectangle.Height - 6, rectangle.Width - 12, 2),
             Palette.WoodDark
         );
         int textWidth = font.MeasureWidth(label, 1);
@@ -1442,22 +1058,12 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
         spriteBatch.Draw(pixel, rectangle, selected ? Palette.Highlight : Palette.WoodDark);
         spriteBatch.Draw(
             pixel,
-            new Rectangle(
-                rectangle.X + 2,
-                rectangle.Y + 2,
-                rectangle.Width - 4,
-                rectangle.Height - 4
-            ),
+            new Rectangle(rectangle.X + 2, rectangle.Y + 2, rectangle.Width - 4, rectangle.Height - 4),
             selected ? Palette.ParchmentLight : Palette.Parchment
         );
         spriteBatch.Draw(
             pixel,
-            new Rectangle(
-                rectangle.X + 3,
-                rectangle.Y + rectangle.Height - 4,
-                rectangle.Width - 6,
-                1
-            ),
+            new Rectangle(rectangle.X + 3, rectangle.Y + rectangle.Height - 4, rectangle.Width - 6, 1),
             Palette.ParchmentDark
         );
     }
@@ -1468,21 +1074,9 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
         spriteBatch.Draw(pixel, rectangle, new Color(74, 51, 37, 35));
         if (item.Type == ItemType.Seed)
         {
-            spriteBatch.Draw(
-                pixel,
-                new Rectangle(rectangle.X + 4, rectangle.Y + 6, 6, 5),
-                new Color(126, 82, 36)
-            );
-            spriteBatch.Draw(
-                pixel,
-                new Rectangle(rectangle.X + 7, rectangle.Y + 3, 3, 4),
-                new Color(72, 172, 72)
-            );
-            spriteBatch.Draw(
-                pixel,
-                new Rectangle(rectangle.X + 9, rectangle.Y + 4, 3, 2),
-                new Color(110, 210, 91)
-            );
+            spriteBatch.Draw(pixel, new Rectangle(rectangle.X + 4, rectangle.Y + 6, 6, 5), new Color(126, 82, 36));
+            spriteBatch.Draw(pixel, new Rectangle(rectangle.X + 7, rectangle.Y + 3, 3, 4), new Color(72, 172, 72));
+            spriteBatch.Draw(pixel, new Rectangle(rectangle.X + 9, rectangle.Y + 4, 3, 2), new Color(110, 210, 91));
             return;
         }
 
@@ -1493,21 +1087,9 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
                 : item.Id.Contains("turnip", StringComparison.Ordinal) ? new Color(239, 230, 218)
                 : item.Id.Contains("potato", StringComparison.Ordinal) ? new Color(181, 126, 64)
                 : new Color(230, 73, 67);
-            spriteBatch.Draw(
-                pixel,
-                new Rectangle(rectangle.X + 4, rectangle.Y + 5, 7, 7),
-                cropColor
-            );
-            spriteBatch.Draw(
-                pixel,
-                new Rectangle(rectangle.X + 6, rectangle.Y + 2, 4, 4),
-                new Color(65, 176, 73)
-            );
-            spriteBatch.Draw(
-                pixel,
-                new Rectangle(rectangle.X + 5, rectangle.Y + 6, 2, 1),
-                Palette.ParchmentLight
-            );
+            spriteBatch.Draw(pixel, new Rectangle(rectangle.X + 4, rectangle.Y + 5, 7, 7), cropColor);
+            spriteBatch.Draw(pixel, new Rectangle(rectangle.X + 6, rectangle.Y + 2, 4, 4), new Color(65, 176, 73));
+            spriteBatch.Draw(pixel, new Rectangle(rectangle.X + 5, rectangle.Y + 6, 2, 1), Palette.ParchmentLight);
             return;
         }
 
@@ -1516,21 +1098,9 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
             Color fishColor = item.Id.Contains("golden", StringComparison.Ordinal)
                 ? Palette.Highlight
                 : Palette.WaterLight;
-            spriteBatch.Draw(
-                pixel,
-                new Rectangle(rectangle.X + 2, rectangle.Y + 6, 9, 5),
-                fishColor
-            );
-            spriteBatch.Draw(
-                pixel,
-                new Rectangle(rectangle.X + 10, rectangle.Y + 5, 3, 7),
-                Palette.WaterDeep
-            );
-            spriteBatch.Draw(
-                pixel,
-                new Rectangle(rectangle.X + 4, rectangle.Y + 7, 1, 1),
-                Palette.Text
-            );
+            spriteBatch.Draw(pixel, new Rectangle(rectangle.X + 2, rectangle.Y + 6, 9, 5), fishColor);
+            spriteBatch.Draw(pixel, new Rectangle(rectangle.X + 10, rectangle.Y + 5, 3, 7), Palette.WaterDeep);
+            spriteBatch.Draw(pixel, new Rectangle(rectangle.X + 4, rectangle.Y + 7, 1, 1), Palette.Text);
             return;
         }
 
@@ -1546,11 +1116,7 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
 
         if (item.ToolKind == ToolKind.Hoe)
         {
-            spriteBatch.Draw(
-                pixel,
-                new Rectangle(rectangle.X + 6, rectangle.Y + 2, 2, 11),
-                Palette.WoodLight
-            );
+            spriteBatch.Draw(pixel, new Rectangle(rectangle.X + 6, rectangle.Y + 2, 2, 11), Palette.WoodLight);
             spriteBatch.Draw(pixel, new Rectangle(rectangle.X + 4, rectangle.Y + 2, 6, 2), color);
         }
         else if (item.ToolKind == ToolKind.WateringCan)
@@ -1565,38 +1131,18 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
         }
         else if (item.ToolKind == ToolKind.FishingRod)
         {
-            spriteBatch.Draw(
-                pixel,
-                new Rectangle(rectangle.X + 6, rectangle.Y + 1, 1, rectangle.Height - 2),
-                color
-            );
-            spriteBatch.Draw(
-                pixel,
-                new Rectangle(rectangle.X + 7, rectangle.Y + 4, 5, 1),
-                Palette.TextLight
-            );
-            spriteBatch.Draw(
-                pixel,
-                new Rectangle(rectangle.X + 11, rectangle.Y + 7, 2, 2),
-                Palette.WaterLight
-            );
+            spriteBatch.Draw(pixel, new Rectangle(rectangle.X + 6, rectangle.Y + 1, 1, rectangle.Height - 2), color);
+            spriteBatch.Draw(pixel, new Rectangle(rectangle.X + 7, rectangle.Y + 4, 5, 1), Palette.TextLight);
+            spriteBatch.Draw(pixel, new Rectangle(rectangle.X + 11, rectangle.Y + 7, 2, 2), Palette.WaterLight);
         }
         else if (item.ToolKind == ToolKind.Axe)
         {
-            spriteBatch.Draw(
-                pixel,
-                new Rectangle(rectangle.X + 7, rectangle.Y + 3, 2, 10),
-                Palette.WoodLight
-            );
+            spriteBatch.Draw(pixel, new Rectangle(rectangle.X + 7, rectangle.Y + 3, 2, 10), Palette.WoodLight);
             spriteBatch.Draw(pixel, new Rectangle(rectangle.X + 4, rectangle.Y + 2, 6, 5), color);
         }
         else if (item.ToolKind == ToolKind.Pickaxe)
         {
-            spriteBatch.Draw(
-                pixel,
-                new Rectangle(rectangle.X + 7, rectangle.Y + 3, 2, 10),
-                Palette.WoodLight
-            );
+            spriteBatch.Draw(pixel, new Rectangle(rectangle.X + 7, rectangle.Y + 3, 2, 10), Palette.WoodLight);
             spriteBatch.Draw(pixel, new Rectangle(rectangle.X + 3, rectangle.Y + 2, 10, 2), color);
         }
     }
@@ -1614,11 +1160,7 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
                 spriteBatch.Draw(
                     pixel,
                     tile,
-                    (
-                        (position.X * 7 + position.Y * 11) % 5 == 0
-                            ? Palette.GrassLight
-                            : Palette.Grass
-                    )
+                    ((position.X * 7 + position.Y * 11) % 5 == 0 ? Palette.GrassLight : Palette.Grass)
                 );
                 DrawGroundDither(spriteBatch, tile, position, TileType.Grass);
                 if ((position.X + position.Y) % 7 == 0)
@@ -1633,21 +1175,13 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
         {
             Rectangle waterTile = new(x, 238 + (x / 16 % 2) * 4, 16, 18);
             spriteBatch.Draw(pixel, waterTile, Palette.Water);
-            spriteBatch.Draw(
-                pixel,
-                new Rectangle(x + 3, waterTile.Y + 8, 8, 1),
-                Palette.WaterLight
-            );
+            spriteBatch.Draw(pixel, new Rectangle(x + 3, waterTile.Y + 8, 8, 1), Palette.WaterLight);
         }
 
         spriteBatch.Draw(pixel, new Rectangle(0, 218, VirtualWidth, 28), Palette.Path);
         for (int x = 0; x < VirtualWidth; x += 22)
         {
-            DrawPathStones(
-                spriteBatch,
-                new Rectangle(x, 218, 16, 16),
-                new GridPosition(x / 16, 14)
-            );
+            DrawPathStones(spriteBatch, new Rectangle(x, 218, 16, 16), new GridPosition(x / 16, 14));
         }
 
         DrawTitleHouse(spriteBatch, 70, 118);
@@ -1693,20 +1227,11 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
         spriteBatch.Draw(pixel, rectangle, Palette.WoodDark);
         spriteBatch.Draw(
             pixel,
-            new Rectangle(
-                rectangle.X + 2,
-                rectangle.Y + 2,
-                rectangle.Width - 4,
-                rectangle.Height - 4
-            ),
+            new Rectangle(rectangle.X + 2, rectangle.Y + 2, rectangle.Width - 4, rectangle.Height - 4),
             new Color(80, 57, 42)
         );
         int width = (int)((rectangle.Width - 4) * Math.Clamp(normalized, 0f, 1f));
-        spriteBatch.Draw(
-            pixel,
-            new Rectangle(rectangle.X + 2, rectangle.Y + 2, width, rectangle.Height - 4),
-            fill
-        );
+        spriteBatch.Draw(pixel, new Rectangle(rectangle.X + 2, rectangle.Y + 2, width, rectangle.Height - 4), fill);
         spriteBatch.Draw(
             pixel,
             new Rectangle(rectangle.X + 3, rectangle.Y + 3, Math.Max(0, width - 2), 1),
@@ -1720,24 +1245,11 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
         spriteBatch.Draw(pixel, rectangle, Palette.WoodDark);
         spriteBatch.Draw(
             pixel,
-            new Rectangle(
-                rectangle.X + 2,
-                rectangle.Y + 2,
-                rectangle.Width - 4,
-                rectangle.Height - 4
-            ),
+            new Rectangle(rectangle.X + 2, rectangle.Y + 2, rectangle.Width - 4, rectangle.Height - 4),
             Palette.GrassDark
         );
-        spriteBatch.Draw(
-            pixel,
-            new Rectangle(rectangle.X + 5, rectangle.Y + 4, 7, 5),
-            Palette.Energy
-        );
-        spriteBatch.Draw(
-            pixel,
-            new Rectangle(rectangle.X + 7, rectangle.Y + 9, 2, 4),
-            Palette.Energy
-        );
+        spriteBatch.Draw(pixel, new Rectangle(rectangle.X + 5, rectangle.Y + 4, 7, 5), Palette.Energy);
+        spriteBatch.Draw(pixel, new Rectangle(rectangle.X + 7, rectangle.Y + 9, 2, 4), Palette.Energy);
     }
 
     private void DrawSunBadge(SpriteBatch spriteBatch, Rectangle rectangle)
@@ -1746,19 +1258,10 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
         spriteBatch.Draw(pixel, rectangle, Palette.WoodDark);
         spriteBatch.Draw(
             pixel,
-            new Rectangle(
-                rectangle.X + 3,
-                rectangle.Y + 3,
-                rectangle.Width - 6,
-                rectangle.Height - 6
-            ),
+            new Rectangle(rectangle.X + 3, rectangle.Y + 3, rectangle.Width - 6, rectangle.Height - 6),
             Palette.Highlight
         );
-        spriteBatch.Draw(
-            pixel,
-            new Rectangle(rectangle.X + 6, rectangle.Y + 6, 4, 4),
-            Palette.PathLight
-        );
+        spriteBatch.Draw(pixel, new Rectangle(rectangle.X + 6, rectangle.Y + 6, 4, 4), Palette.PathLight);
     }
 
     private void DrawCoin(SpriteBatch spriteBatch, int x, int y)
@@ -1778,11 +1281,7 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
     private void DrawOverlay(SpriteBatch spriteBatch)
     {
         RequirePixel();
-        spriteBatch.Draw(
-            RequirePixel(),
-            new Rectangle(0, 0, VirtualWidth, VirtualHeight),
-            new Color(30, 20, 18, 150)
-        );
+        spriteBatch.Draw(RequirePixel(), new Rectangle(0, 0, VirtualWidth, VirtualHeight), new Color(30, 20, 18, 150));
     }
 
     private Rectangle WorldRectangle(GridPosition position)
@@ -1819,12 +1318,8 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
             return Point.Zero;
         }
 
-        int x = (int)(
-            (_input.CurrentMouse.X - destination.X) * (VirtualWidth / (float)destination.Width)
-        );
-        int y = (int)(
-            (_input.CurrentMouse.Y - destination.Y) * (VirtualHeight / (float)destination.Height)
-        );
+        int x = (int)((_input.CurrentMouse.X - destination.X) * (VirtualWidth / (float)destination.Width));
+        int y = (int)((_input.CurrentMouse.Y - destination.Y) * (VirtualHeight / (float)destination.Height));
         return new Point(x, y);
     }
 
@@ -1864,8 +1359,7 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
 
     private SaveManager RequireSaveManager()
     {
-        return _saveManager
-            ?? throw new InvalidOperationException("Save manager is not initialized.");
+        return _saveManager ?? throw new InvalidOperationException("Save manager is not initialized.");
     }
 
     private Texture2D RequirePixel()

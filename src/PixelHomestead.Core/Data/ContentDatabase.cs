@@ -9,7 +9,7 @@ public sealed class ContentDatabase
     private static readonly JsonSerializerOptions SerializerOptions = new()
     {
         PropertyNameCaseInsensitive = true,
-        Converters = { new JsonStringEnumConverter() }
+        Converters = { new JsonStringEnumConverter() },
     };
 
     public required IReadOnlyDictionary<string, ItemDefinition> Items { get; init; }
@@ -26,7 +26,7 @@ public sealed class ContentDatabase
         return new ContentDatabase
         {
             Items = items.ToDictionary(item => item.Id),
-            Crops = crops.ToDictionary(crop => crop.Id)
+            Crops = crops.ToDictionary(crop => crop.Id),
         };
     }
 

@@ -7,5 +7,5 @@ public enum GameScreen
     Inventory,
     Pause,
     Settings,
-    Credits
+    Credits,
 }
