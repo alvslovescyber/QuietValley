@@ -23,12 +23,13 @@ The active runtime atlases now use the generated replacement assets for grass, w
 ![Pixel Homestead interior and town assets](docs/images/interior-town-assets.png)
 
 The house/interior pass adds a cozy living room screen, town house concepts, well, mailbox, signpost, planter, lamp post, fireplace, bed, sofa, bookshelf, and warm wood furniture references. These assets are original generated project assets and are wired into the runtime where useful.
+The documentation sheet is composited on a neutral meadow/parchment background so there is no visible purple chroma-key backdrop.
 
 ### Tool and Item Icons
 
 ![Pixel Homestead generated tool and item icons](docs/images/tool-and-item-icons.png)
 
-The hotbar uses generated tool art and cleaned runtime icon atlas integration for tools, seeds, crops, and fish.
+The hotbar uses a regenerated clean 3x3 parchment tool source sheet for hoe, watering can, axe, pickaxe, fishing rod, seed bag, scythe, hammer, and shovel. Legacy magenta-backed tool sources were removed from the runtime icon pipeline.
 
 ## Current Gameplay Features
 
@@ -37,13 +38,14 @@ The hotbar uses generated tool art and cleaned runtime icon atlas integration fo
 - Tile-based starter world with a farmhouse, farm plot, pond, paths, fences, trees, bushes, props, shipping box, and a small town area.
 - Infinite deterministic procedural terrain outside the authored starter area with trees, bushes, flowers, stones, and ponds.
 - Smooth player movement with acceleration, deceleration, sprinting, facing direction, walk animation, camera follow, and collision.
-- Swimming support: the player can enter water, gets a swim visual treatment, bubbles appear, and oxygen drains while swimming.
+- Swimming support: the player can enter water, keeps the same character identity as the walking sprite, gets ripple/bubble treatment, and oxygen drains while swimming.
 - House entry support: interact at the farmhouse door to open a cozy living room screen with sleep and exit actions.
 - Farming loop: hoe soil, plant seeds, water crops, sleep to grow, and harvest mature crops.
 - Fishing foundation: cast near water, wait for a bite, catch fish, and add them to inventory.
 - Inventory system with stacking, hotbar integration, mouse selection, click/drag movement, and stack merging.
 - Economy system with shipping box, sellable item validation, coins, and overnight payout.
 - Day/time system, energy system, auto-save on sleep, manual save, and JSON save/load.
+- Atomic save/settings writes with corrupt-save fallback and defensive save-data validation.
 - Collision debug overlay with `F3` for blocked tiles, player hitbox, and interaction target.
 - Settings persistence for music volume, SFX volume, window scale, fullscreen, and debug collision.
 
@@ -118,18 +120,24 @@ The project currently includes original generated PNG assets in `src/PixelHomest
 python3 scripts/generate_assets.py
 ```
 
-The generator rebuilds runtime atlases from the generated source sheets, removes chroma-key/purple background artifacts, and integrates the generated tool source sheet into the runtime icon atlas.
+The generator rebuilds runtime atlases from the generated source sheets, removes chroma-key/purple background artifacts, and integrates the clean parchment tool source sheet into the runtime icon atlas.
+Build outputs, packaged releases, coverage reports, and temporary atlas-cleaning files are ignored so only source assets and intentional documentation screenshots are versioned.
 
 ## Downloads
 
 Packaged builds are published on GitHub Releases when available:
 
 - macOS: download the `.dmg`, open it, and run `PixelHomestead.Game`.
-- Windows: download the Windows package and run `PixelHomestead.Game.exe`.
+- Windows: download the `PixelHomestead-win-x64.zip`, extract it, and run `PixelHomestead.Game.exe`.
 
 ## Save Location
 
 Saves are written to the current user's application data folder under `PixelHomestead/savegame.json`. Settings are written under `PixelHomestead/settings.json`.
+Save and settings writes use a temporary file followed by an atomic replace so an interrupted write is less likely to corrupt the active file.
+
+## License
+
+Pixel Homestead is open source under the [MIT License](LICENSE).
 
 ## QA Status
 

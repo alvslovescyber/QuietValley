@@ -9,11 +9,11 @@ namespace PixelHomestead.Game.UI;
 
 public sealed class GameUiRenderer(Texture2D pixel, PixelFont font, ArtAssets art)
 {
-    public static readonly Rectangle NewGameButton = new(94, 270, 84, 40);
-    public static readonly Rectangle LoadGameButton = new(207, 270, 84, 40);
-    public static readonly Rectangle SettingsButton = new(320, 270, 84, 40);
-    public static readonly Rectangle CreditsButton = new(432, 270, 84, 40);
-    public static readonly Rectangle QuitButton = new(546, 270, 84, 40);
+    public static readonly Rectangle NewGameButton = new(70, 278, 96, 34);
+    public static readonly Rectangle LoadGameButton = new(184, 278, 96, 34);
+    public static readonly Rectangle SettingsButton = new(298, 278, 96, 34);
+    public static readonly Rectangle CreditsButton = new(412, 278, 96, 34);
+    public static readonly Rectangle QuitButton = new(526, 278, 84, 34);
     public static readonly Rectangle ExitHomeButton = new(488, 306, 112, 26);
     public static readonly Rectangle SleepHomeButton = new(368, 306, 104, 26);
 
@@ -22,11 +22,11 @@ public sealed class GameUiRenderer(Texture2D pixel, PixelFont font, ArtAssets ar
         DrawTitleScene(spriteBatch);
         DrawTitleSign(spriteBatch);
 
-        DrawMenuButton(spriteBatch, NewGameButton, "New Farm", mouse, "sprout");
-        DrawMenuButton(spriteBatch, LoadGameButton, "Continue", mouse, "berry");
-        DrawMenuButton(spriteBatch, SettingsButton, "Settings", mouse, "gear");
-        DrawMenuButton(spriteBatch, CreditsButton, "Credits", mouse, "heart");
-        DrawMenuButton(spriteBatch, QuitButton, "Quit", mouse, "moon");
+        DrawMenuButton(spriteBatch, NewGameButton, "New Farm", mouse);
+        DrawMenuButton(spriteBatch, LoadGameButton, "Continue", mouse);
+        DrawMenuButton(spriteBatch, SettingsButton, "Settings", mouse);
+        DrawMenuButton(spriteBatch, CreditsButton, "Credits", mouse);
+        DrawMenuButton(spriteBatch, QuitButton, "Quit", mouse);
     }
 
     public void DrawHud(SpriteBatch spriteBatch, GameState state, Point mouse)
@@ -267,14 +267,31 @@ public sealed class GameUiRenderer(Texture2D pixel, PixelFont font, ArtAssets ar
 
     public void DrawInteractionPrompt(SpriteBatch spriteBatch, string prompt, Vector2 worldPosition, Vector2 camera)
     {
-        int width = Math.Max(92, font.MeasureWidth(prompt, 1) + 16);
+        int width = Math.Clamp(font.MeasureWidth(prompt, 1) + 28, 128, 312);
         Vector2 screenPosition = worldPosition - camera;
         int x = Math.Clamp((int)screenPosition.X - width / 2, 6, GameConstants.VirtualWidth - width - 6);
-        int y = Math.Clamp((int)screenPosition.Y - 46, 8, GameConstants.VirtualHeight - 28);
-        Rectangle panel = new(x, y, width, 18);
-        DrawPanel(spriteBatch, panel, PanelStyle.Compact);
-        spriteBatch.Draw(pixel, new Rectangle((int)screenPosition.X - 2, panel.Bottom - 1, 4, 4), Palette.WoodDark);
-        font.Draw(spriteBatch, prompt, new Vector2(panel.X + 8, panel.Y + 6), Palette.Text, 1);
+        int y = Math.Clamp((int)screenPosition.Y - 58, 8, GameConstants.VirtualHeight - 38);
+        Rectangle panel = new(x, y, width, 28);
+
+        spriteBatch.Draw(
+            pixel,
+            new Rectangle(panel.X + 4, panel.Y + 5, panel.Width, panel.Height),
+            new Color(24, 18, 14, 130)
+        );
+        spriteBatch.Draw(pixel, panel, Palette.WoodDark);
+        spriteBatch.Draw(
+            pixel,
+            new Rectangle(panel.X + 3, panel.Y + 3, panel.Width - 6, panel.Height - 6),
+            Palette.Wood
+        );
+        spriteBatch.Draw(
+            pixel,
+            new Rectangle(panel.X + 7, panel.Y + 7, panel.Width - 14, panel.Height - 14),
+            Palette.ParchmentLight
+        );
+        spriteBatch.Draw(pixel, new Rectangle(panel.X + 10, panel.Y + 10, panel.Width - 20, 1), Color.White * 0.55f);
+        spriteBatch.Draw(pixel, new Rectangle((int)screenPosition.X - 3, panel.Bottom - 1, 6, 5), Palette.WoodDark);
+        font.Draw(spriteBatch, prompt, new Vector2(panel.X + 14, panel.Y + 11), Palette.Text, 1);
     }
 
     public void DrawToast(SpriteBatch spriteBatch, string text, string iconKey, Vector2 position, float alpha)
@@ -444,73 +461,54 @@ public sealed class GameUiRenderer(Texture2D pixel, PixelFont font, ArtAssets ar
         );
     }
 
-    private void DrawMenuButton(SpriteBatch spriteBatch, Rectangle rectangle, string label, Point mouse, string icon)
+    private void DrawMenuButton(SpriteBatch spriteBatch, Rectangle rectangle, string label, Point mouse)
     {
         bool hovered = rectangle.Contains(mouse);
+        int yOffset = hovered ? -1 : 0;
+        spriteBatch.Draw(
+            pixel,
+            new Rectangle(rectangle.X + 3, rectangle.Y + 4, rectangle.Width, rectangle.Height),
+            Palette.PanelShadow
+        );
+        spriteBatch.Draw(
+            pixel,
+            new Rectangle(rectangle.X, rectangle.Y + yOffset, rectangle.Width, rectangle.Height),
+            hovered ? Palette.Highlight : Palette.WoodDark
+        );
+        spriteBatch.Draw(
+            pixel,
+            new Rectangle(rectangle.X + 3, rectangle.Y + 3 + yOffset, rectangle.Width - 6, rectangle.Height - 6),
+            Palette.Wood
+        );
+        spriteBatch.Draw(
+            pixel,
+            new Rectangle(rectangle.X + 7, rectangle.Y + 7 + yOffset, rectangle.Width - 14, rectangle.Height - 14),
+            hovered ? Palette.ParchmentLight : Palette.Parchment
+        );
+        spriteBatch.Draw(
+            pixel,
+            new Rectangle(rectangle.X + 10, rectangle.Y + 10 + yOffset, rectangle.Width - 20, 1),
+            Palette.ParchmentLight
+        );
+        spriteBatch.Draw(
+            pixel,
+            new Rectangle(rectangle.X + 10, rectangle.Bottom - 9 + yOffset, rectangle.Width - 20, 2),
+            Palette.ParchmentDark
+        );
+
         if (hovered)
         {
-            spriteBatch.Draw(
-                pixel,
-                new Rectangle(rectangle.X - 2, rectangle.Y - 2, rectangle.Width + 4, 2),
-                Palette.Highlight
-            );
-            spriteBatch.Draw(
-                pixel,
-                new Rectangle(rectangle.X - 2, rectangle.Bottom, rectangle.Width + 4, 2),
-                Palette.Highlight
-            );
-            spriteBatch.Draw(
-                pixel,
-                new Rectangle(rectangle.X - 2, rectangle.Y - 2, 2, rectangle.Height + 4),
-                Palette.Highlight
-            );
-            spriteBatch.Draw(
-                pixel,
-                new Rectangle(rectangle.Right, rectangle.Y - 2, 2, rectangle.Height + 4),
-                Palette.Highlight
-            );
-            spriteBatch.Draw(pixel, rectangle, new Color(255, 242, 188, 35));
+            spriteBatch.Draw(pixel, new Rectangle(rectangle.X + 6, rectangle.Y + 6, 3, 3), Palette.Highlight);
+            spriteBatch.Draw(pixel, new Rectangle(rectangle.Right - 9, rectangle.Y + 6, 3, 3), Palette.Highlight);
         }
 
         DrawCenteredText(
             spriteBatch,
             label.ToUpperInvariant(),
-            new Rectangle(rectangle.X, rectangle.Y + 12, rectangle.Width, 12),
+            new Rectangle(rectangle.X + 6, rectangle.Y + 14 + yOffset, rectangle.Width - 12, 12),
             Palette.WoodDark,
             1
         );
-        DrawMenuIcon(spriteBatch, rectangle.Center.X - 5, rectangle.Bottom - 12, icon);
-    }
-
-    private void DrawMenuIcon(SpriteBatch spriteBatch, int x, int y, string icon)
-    {
-        switch (icon)
-        {
-            case "sprout":
-                spriteBatch.Draw(pixel, new Rectangle(x + 4, y + 2, 2, 7), Palette.GrassDark);
-                spriteBatch.Draw(pixel, new Rectangle(x, y + 3, 5, 3), Palette.Energy);
-                spriteBatch.Draw(pixel, new Rectangle(x + 5, y, 5, 3), Palette.GrassLight);
-                break;
-            case "berry":
-                spriteBatch.Draw(pixel, new Rectangle(x + 2, y + 3, 7, 7), Palette.FlowerPink);
-                spriteBatch.Draw(pixel, new Rectangle(x + 5, y + 1, 3, 3), Palette.GrassDark);
-                spriteBatch.Draw(pixel, new Rectangle(x + 4, y + 5, 2, 2), Palette.ParchmentLight);
-                break;
-            case "gear":
-                spriteBatch.Draw(pixel, new Rectangle(x + 2, y + 2, 8, 8), Palette.Rock);
-                spriteBatch.Draw(pixel, new Rectangle(x + 4, y + 4, 4, 4), Palette.WoodDark);
-                spriteBatch.Draw(pixel, new Rectangle(x + 5, y + 5, 2, 2), Palette.ParchmentLight);
-                break;
-            case "heart":
-                spriteBatch.Draw(pixel, new Rectangle(x + 1, y + 2, 4, 4), Palette.FlowerPink);
-                spriteBatch.Draw(pixel, new Rectangle(x + 6, y + 2, 4, 4), Palette.FlowerPink);
-                spriteBatch.Draw(pixel, new Rectangle(x + 3, y + 5, 6, 4), Palette.FlowerPink);
-                break;
-            default:
-                spriteBatch.Draw(pixel, new Rectangle(x + 3, y + 2, 6, 6), Palette.Highlight);
-                spriteBatch.Draw(pixel, new Rectangle(x + 1, y + 5, 8, 3), Palette.ParchmentLight);
-                break;
-        }
     }
 
     private void DrawCenteredText(SpriteBatch spriteBatch, string text, Rectangle bounds, Color color, int scale)

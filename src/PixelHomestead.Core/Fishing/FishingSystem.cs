@@ -23,12 +23,12 @@ public sealed class FishingSystem
         bool nearWater =
             world.GetTile(target).IsWater
             || AdjacentPositions(playerPosition).Any(position => world.GetTile(position).IsWater);
-        if (!nearWater || !energy.Spend(3))
+        if (!nearWater || !energy.HasEnough(3))
         {
             return null;
         }
 
-        return CatchFish(inventory, content);
+        return CatchFish(inventory, content, energy);
     }
 
     public string? TryCatchFishAtWater(
@@ -39,18 +39,23 @@ public sealed class FishingSystem
         EnergySystem energy
     )
     {
-        if (!world.GetTile(waterPosition).IsWater || !energy.Spend(3))
+        if (!world.GetTile(waterPosition).IsWater || !energy.HasEnough(3))
         {
             return null;
         }
 
-        return CatchFish(inventory, content);
+        return CatchFish(inventory, content, energy);
     }
 
-    private string CatchFish(Inventory inventory, ContentDatabase content)
+    private string? CatchFish(Inventory inventory, ContentDatabase content, EnergySystem energy)
     {
         string fishId = SelectFish(content);
-        inventory.Add(fishId, 1, content.Items);
+        if (!inventory.Add(fishId, 1, content.Items))
+        {
+            return null;
+        }
+
+        energy.Spend(3);
         return fishId;
     }
 

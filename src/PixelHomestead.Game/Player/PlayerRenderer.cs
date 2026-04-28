@@ -24,7 +24,7 @@ public sealed class PlayerRenderer(ArtAssets art, Texture2D pixel)
         Rectangle destination = new((int)screen.X - 4, (int)screen.Y + bob, 24, 16);
         if (player.IsSwimming)
         {
-            DrawSwimming(spriteBatch, player, screen, frame);
+            DrawSwimming(spriteBatch, player, screen, source, frame);
         }
         else
         {
@@ -42,30 +42,53 @@ public sealed class PlayerRenderer(ArtAssets art, Texture2D pixel)
         }
     }
 
-    private void DrawSwimming(SpriteBatch spriteBatch, PlayerController player, Vector2 screen, int frame)
+    private void DrawSwimming(
+        SpriteBatch spriteBatch,
+        PlayerController player,
+        Vector2 screen,
+        Rectangle playerSource,
+        int frame
+    )
     {
-        Rectangle rippleDestination = new((int)screen.X - 19, (int)screen.Y + 1, 54, 30);
-        spriteBatch.Draw(art.Props, rippleDestination, ArtAssets.WaterRippleSource, Color.White * 0.9f);
+        Rectangle rippleDestination = new((int)screen.X - 10, (int)screen.Y + 4, 36, 20);
+        spriteBatch.Draw(art.Props, rippleDestination, ArtAssets.WaterRippleSource, Color.White * 0.5f);
 
-        Rectangle swimmerDestination = new((int)screen.X - 16, (int)screen.Y - 14, 48, 40);
-        spriteBatch.Draw(art.Props, swimmerDestination, ArtAssets.SwimmerSource(frame), Color.White);
+        int bob = player.IsMoving && frame is 1 or 3 ? -1 : 0;
+        Rectangle swimmerDestination = new((int)screen.X - 4, (int)screen.Y - 2 + bob, 24, 16);
+        spriteBatch.Draw(art.Player, swimmerDestination, playerSource, Color.White);
+
+        DrawWaterStroke(spriteBatch, (int)screen.X - 6, (int)screen.Y + 9, 28, Palette.WaterLight * 0.85f);
         spriteBatch.Draw(
             pixel,
-            new Rectangle((int)screen.X - 3, (int)screen.Y + 12, 22, 3),
-            new Color(102, 205, 232, 135)
+            new Rectangle((int)screen.X - 4, (int)screen.Y + 10, 25, 5),
+            new Color(102, 205, 232, 175)
         );
         spriteBatch.Draw(
             pixel,
-            new Rectangle((int)screen.X + 1, (int)screen.Y + 14, 16, 2),
+            new Rectangle((int)screen.X - 1, (int)screen.Y + 14, 20, 2),
             new Color(35, 118, 178, 150)
         );
+        DrawWaterStroke(spriteBatch, (int)screen.X - 8, (int)screen.Y + 16, 30, new Color(220, 250, 255, 120));
 
         int bubbleOffset = (int)MathF.Floor(player.WalkCycle) % 10;
-        DrawBubble(spriteBatch, (int)screen.X + 16, (int)screen.Y + 6 - bubbleOffset / 2, 3);
+        int bubbleX = player.Facing switch
+        {
+            Core.Core.Direction.Left => (int)screen.X - 7,
+            Core.Core.Direction.Right => (int)screen.X + 20,
+            _ => (int)screen.X + 18,
+        };
+        DrawBubble(spriteBatch, bubbleX, (int)screen.Y + 6 - bubbleOffset / 2, 3);
         if (bubbleOffset > 4)
         {
-            DrawBubble(spriteBatch, (int)screen.X + 20, (int)screen.Y + 2, 2);
+            DrawBubble(spriteBatch, bubbleX + 4, (int)screen.Y + 2, 2);
         }
+    }
+
+    private void DrawWaterStroke(SpriteBatch spriteBatch, int x, int y, int width, Color color)
+    {
+        spriteBatch.Draw(pixel, new Rectangle(x + 2, y, width - 4, 1), color);
+        spriteBatch.Draw(pixel, new Rectangle(x, y + 1, 6, 1), color);
+        spriteBatch.Draw(pixel, new Rectangle(x + width - 6, y + 1, 6, 1), color);
     }
 
     private void DrawBubble(SpriteBatch spriteBatch, int x, int y, int size)

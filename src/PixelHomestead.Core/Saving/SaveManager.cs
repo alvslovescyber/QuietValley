@@ -13,6 +13,7 @@ public sealed class SaveManager
 {
     private static readonly JsonSerializerOptions SerializerOptions = new()
     {
+        PropertyNameCaseInsensitive = true,
         WriteIndented = true,
         Converters = { new JsonStringEnumConverter() },
     };
@@ -31,7 +32,7 @@ public sealed class SaveManager
     {
         SaveData saveData = SaveData.FromState(state);
         string json = JsonSerializer.Serialize(saveData, SerializerOptions);
-        File.WriteAllText(SavePath, json);
+        AtomicFile.WriteAllText(SavePath, json);
     }
 
     public GameState Load(ContentDatabase content)
@@ -140,9 +141,9 @@ public sealed class SaveManager
         {
             GameState state = new(content);
             state.Player.TilePosition = new GridPosition(PlayerX, PlayerY);
-            state.Player.WorldX = PlayerWorldX;
-            state.Player.WorldY = PlayerWorldY;
-            state.Player.Facing = Facing;
+            state.Player.WorldX = NormalizeWorldCoordinate(PlayerWorldX, PlayerX);
+            state.Player.WorldY = NormalizeWorldCoordinate(PlayerWorldY, PlayerY);
+            state.Player.Facing = Enum.IsDefined(Facing) ? Facing : Direction.Down;
             state.Player.SelectedHotbarIndex = Math.Clamp(SelectedHotbarIndex, 0, 8);
             state.Time.SetState(Day, Season, MinutesSinceMidnight);
             state.Energy.SetCurrent(Energy);
@@ -151,29 +152,38 @@ public sealed class SaveManager
 
             foreach (SaveInventorySlot slot in Inventory)
             {
-                if (slot.Index >= 0 && slot.Index < state.Inventory.Capacity)
+                InventorySlot? restoredSlot = RestoreInventorySlot(slot, content);
+                if (restoredSlot is not null && slot.Index >= 0 && slot.Index < state.Inventory.Capacity)
                 {
-                    state.Inventory[slot.Index] = new InventorySlot { ItemId = slot.ItemId, Quantity = slot.Quantity };
+                    state.Inventory[slot.Index] = restoredSlot;
                 }
             }
 
             state.Economy.RestoreShippingBin(
-                ShippingBin.Select(slot => new InventorySlot { ItemId = slot.ItemId, Quantity = slot.Quantity })
+                ShippingBin.Select(slot => RestoreShippingSlot(slot, content)).OfType<InventorySlot>()
             );
 
             foreach (SaveTile tile in TileOverrides)
             {
-                state.World.SetTile(new GridPosition(tile.X, tile.Y), tile.Type);
+                if (Enum.IsDefined(tile.Type))
+                {
+                    state.World.SetTile(new GridPosition(tile.X, tile.Y), tile.Type);
+                }
             }
 
             foreach (SaveCrop crop in Crops)
             {
+                if (!content.Crops.TryGetValue(crop.CropId, out CropDefinition? cropDefinition))
+                {
+                    continue;
+                }
+
                 state.World.SetCrop(
                     new GridPosition(crop.X, crop.Y),
                     new CropState
                     {
                         CropId = crop.CropId,
-                        GrowthProgress = crop.GrowthProgress,
+                        GrowthProgress = Math.Clamp(crop.GrowthProgress, 0, cropDefinition.GrowthDays),
                         WateredToday = crop.WateredToday,
                     }
                 );
@@ -188,6 +198,38 @@ public sealed class SaveManager
             }
 
             return state;
+        }
+
+        private static float NormalizeWorldCoordinate(float coordinate, int tileCoordinate)
+        {
+            return float.IsFinite(coordinate) ? coordinate : tileCoordinate * 16;
+        }
+
+        private static InventorySlot? RestoreInventorySlot(SaveInventorySlot slot, ContentDatabase content)
+        {
+            if (slot.ItemId is null || !content.Items.TryGetValue(slot.ItemId, out ItemDefinition? item))
+            {
+                return null;
+            }
+
+            int quantity = Math.Clamp(slot.Quantity, 1, item.MaxStack);
+            return new InventorySlot { ItemId = slot.ItemId, Quantity = quantity };
+        }
+
+        private static InventorySlot? RestoreShippingSlot(SaveInventorySlot slot, ContentDatabase content)
+        {
+            if (
+                slot.ItemId is null
+                || !content.Items.TryGetValue(slot.ItemId, out ItemDefinition? item)
+                || item.Type == ItemType.Tool
+                || item.SellPrice <= 0
+            )
+            {
+                return null;
+            }
+
+            int quantity = Math.Clamp(slot.Quantity, 1, item.MaxStack);
+            return new InventorySlot { ItemId = slot.ItemId, Quantity = quantity };
         }
     }
 

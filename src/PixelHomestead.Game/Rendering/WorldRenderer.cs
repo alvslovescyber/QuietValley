@@ -295,8 +295,15 @@ public sealed class WorldRenderer(ArtAssets art, Texture2D pixel)
 
     private void DrawCrops(SpriteBatch spriteBatch, GameState state, Vector2 camera)
     {
+        Rectangle visibleWorld = VisibleWorldRectangle(camera);
         foreach ((GridPosition position, CropState cropState) in state.World.Crops)
         {
+            Rectangle worldRectangle = TileWorldRectangle(position);
+            if (!visibleWorld.Intersects(worldRectangle))
+            {
+                continue;
+            }
+
             Rectangle destination = TileScreenRectangle(position, camera);
             DrawCrop(spriteBatch, destination, cropState, state.Content.Crops[cropState.CropId]);
         }
@@ -340,9 +347,7 @@ public sealed class WorldRenderer(ArtAssets art, Texture2D pixel)
 
     private void DrawProps(SpriteBatch spriteBatch, GameWorld world, Vector2 camera, Rectangle visibleWorld)
     {
-        foreach (
-            (GridPosition position, Tile tile) in VisibleTiles(world, visibleWorld).OrderBy(entry => entry.Position.Y)
-        )
+        foreach ((GridPosition position, Tile tile) in VisibleTiles(world, visibleWorld))
         {
             Rectangle tileRectangle = TileScreenRectangle(position, camera);
             switch (tile.Type)

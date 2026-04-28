@@ -6,4 +6,13 @@ obj/
 *.tmp
 TestResults/
 artifacts/
+coverage/
+*.dmg
+*.zip
+*.nupkg
+*.snupkg
+*.log
+.idea/
+.vs/
+.vscode/.ropeproject
 src/PixelHomestead.Game/Assets/Generated/world_runtime_ai_alpha.png

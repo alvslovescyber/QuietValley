@@ -1,4 +1,5 @@
 using System.Text.Json;
+using PixelHomestead.Core.Saving;
 
 namespace PixelHomestead.Game;
 
@@ -48,7 +49,7 @@ public sealed record GameSettings
     public void Save()
     {
         Normalize();
-        File.WriteAllText(SettingsPath(), JsonSerializer.Serialize(this, SerializerOptions));
+        AtomicFile.WriteAllText(SettingsPath(), JsonSerializer.Serialize(this, SerializerOptions));
     }
 
     private GameSettings Normalize()

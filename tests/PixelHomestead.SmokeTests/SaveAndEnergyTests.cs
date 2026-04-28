@@ -141,6 +141,90 @@ public sealed class SaveAndEnergyTests
     }
 
     [Fact]
+    public void AtomicFile_ReplacesExistingFileAndCleansTemporaryFiles()
+    {
+        string directory = Path.Combine(Path.GetTempPath(), $"PixelHomesteadAtomicTests-{Guid.NewGuid():N}");
+        string path = Path.Combine(directory, "settings.json");
+
+        try
+        {
+            AtomicFile.WriteAllText(path, "first");
+            AtomicFile.WriteAllText(path, "second");
+
+            Assert.Equal("second", File.ReadAllText(path));
+            Assert.Empty(Directory.EnumerateFiles(directory, "*.tmp"));
+        }
+        finally
+        {
+            if (Directory.Exists(directory))
+            {
+                Directory.Delete(directory, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public void SaveManager_SanitizesInvalidSaveEntries()
+    {
+        ContentDatabase content = LoadContent();
+        string testGameName = $"PixelHomesteadTests-{Guid.NewGuid():N}";
+        SaveManager manager = new(testGameName);
+
+        try
+        {
+            File.WriteAllText(
+                manager.SavePath,
+                """
+                {
+                  "PlayerX": 14,
+                  "PlayerY": 18,
+                  "SelectedHotbarIndex": 99,
+                  "Energy": 500,
+                  "Coins": -25,
+                  "Inventory": [
+                    { "Index": 0, "ItemId": "unknown_item", "Quantity": 5 },
+                    { "Index": 1, "ItemId": "turnip_seed", "Quantity": 500 }
+                  ],
+                  "ShippingBin": [
+                    { "Index": 0, "ItemId": "hoe", "Quantity": 1 },
+                    { "Index": 1, "ItemId": "turnip", "Quantity": 500 }
+                  ],
+                  "TileOverrides": [
+                    { "X": 11, "Y": 20, "Type": "Soil" }
+                  ],
+                  "Crops": [
+                    { "X": 10, "Y": 20, "CropId": "missing_crop", "GrowthProgress": 99, "WateredToday": true },
+                    { "X": 11, "Y": 20, "CropId": "turnip", "GrowthProgress": 99, "WateredToday": true }
+                  ]
+                }
+                """
+            );
+
+            GameState loaded = manager.Load(content);
+
+            Assert.Equal(8, loaded.Player.SelectedHotbarIndex);
+            Assert.Equal(EnergySystem.MaximumEnergy, loaded.Energy.CurrentEnergy);
+            Assert.Equal(0, loaded.Economy.Coins);
+            Assert.True(loaded.Inventory[0].IsEmpty);
+            Assert.Equal("turnip_seed", loaded.Inventory[1].ItemId);
+            Assert.Equal(99, loaded.Inventory[1].Quantity);
+            Assert.Single(loaded.Economy.ShippingBin);
+            Assert.Equal("turnip", loaded.Economy.ShippingBin[0].ItemId);
+            Assert.Equal(99, loaded.Economy.ShippingBin[0].Quantity);
+            Assert.Null(loaded.World.GetCrop(new GridPosition(10, 20)));
+            Assert.Equal(2, loaded.World.GetCrop(new GridPosition(11, 20))?.GrowthProgress);
+        }
+        finally
+        {
+            string? saveDirectory = Path.GetDirectoryName(manager.SavePath);
+            if (!string.IsNullOrWhiteSpace(saveDirectory) && Directory.Exists(saveDirectory))
+            {
+                Directory.Delete(saveDirectory, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
     public void Economy_DoesNotShipUnsellableTools()
     {
         ContentDatabase content = LoadContent();

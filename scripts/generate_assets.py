@@ -28,7 +28,9 @@ def paste_cell(atlas: Image.Image, index: int, sprite: Image.Image, cell: int = 
 
 def is_chroma_key(pixel: tuple[int, int, int, int]) -> bool:
     red, green, blue, alpha = pixel
-    return alpha > 0 and red > 190 and green < 115 and blue > 150 and red + blue > green * 4
+    return alpha == 0 or (
+        alpha > 0 and red > 190 and green < 115 and blue > 150 and red + blue > green * 4
+    )
 
 
 def is_purple_fringe(pixel: tuple[int, int, int, int]) -> bool:
@@ -146,7 +148,7 @@ def fit_sprite(sprite: Image.Image, size: tuple[int, int], bottom_pad: int = 0) 
     new_height = max(1, int(sprite.height * scale))
     resized = sprite.resize((new_width, new_height), Image.Resampling.LANCZOS)
     canvas.alpha_composite(resized, ((target_width - new_width) // 2, target_height - new_height - bottom_pad))
-    return canvas
+    return chroma_to_alpha(canvas)
 
 
 def generated_world_source() -> tuple[Image.Image, Image.Image, list[tuple[int, int, int, int, int]]] | None:
@@ -481,7 +483,6 @@ def make_icons() -> None:
     for index in range(16, 20):
         x = index * 16
         rect(d, (x + 1, 1, x + 14, 14), "#fff1be")
-    paste_ai_tool_icons(atlas)
     # seeds
     for index, leaf in [(5, "#55b94a"), (6, "#72d45b"), (7, "#43b455"), (8, "#66c94e")]:
         x = index * 16
@@ -500,91 +501,44 @@ def make_icons() -> None:
         rect(d, (x + 2, 7, x + 11, 11), color)
         rect(d, (x + 10, 5, x + 14, 13), "#287ab5")
         px(d, x + 4, 8, "#37231b")
-    if not (OUT / "tool_icons_ai_source.png").exists():
-        # scythe, hammer, shovel fallback
-        x = 16 * 16
-        rect(d, (x + 7, 3, x + 8, 14), "#d5903b")
-        rect(d, (x + 4, 2, x + 12, 3), "#a6aba0")
-        rect(d, (x + 11, 3, x + 13, 5), "#a6aba0")
-        x = 17 * 16
-        rect(d, (x + 7, 4, x + 8, 14), "#d5903b")
-        rect(d, (x + 4, 2, x + 12, 6), "#909790")
-        x = 18 * 16
-        rect(d, (x + 7, 3, x + 8, 14), "#d5903b")
-        rect(d, (x + 5, 2, x + 10, 5), "#909790")
+    draw_fallback_extended_tools(d)
+    paste_runtime_tool_icons(atlas)
     atlas.save(OUT / "icons.png")
 
 
-def paste_ai_tool_icons(atlas: Image.Image) -> None:
-    source_path = OUT / "tool_icons_ai_source.png"
+def draw_fallback_extended_tools(draw: ImageDraw.ImageDraw) -> None:
+    # These are only a safety net if the generated runtime source is missing.
+    x = 16 * 16
+    rect(draw, (x + 7, 3, x + 8, 14), "#d5903b")
+    rect(draw, (x + 4, 2, x + 12, 3), "#a6aba0")
+    rect(draw, (x + 11, 3, x + 13, 5), "#a6aba0")
+    x = 17 * 16
+    rect(draw, (x + 7, 4, x + 8, 14), "#d5903b")
+    rect(draw, (x + 4, 2, x + 12, 6), "#909790")
+    x = 18 * 16
+    rect(draw, (x + 7, 3, x + 8, 14), "#d5903b")
+    rect(draw, (x + 5, 2, x + 10, 5), "#909790")
+
+
+def paste_runtime_tool_icons(atlas: Image.Image) -> None:
+    source_path = OUT / "tool_icons_runtime_source.png"
     if not source_path.exists():
         return
 
     source = Image.open(source_path).convert("RGBA")
-    cells = extract_ai_icon_cells(source)
-    if len(cells) < 9:
-        return
-
     atlas_indices = [0, 1, 2, 3, 4, 5, 16, 17, 18]
-    for cell, atlas_index in zip(cells[:9], atlas_indices):
-        icon = chroma_to_alpha(cell).resize((16, 16), Image.Resampling.LANCZOS)
-        icon = chroma_to_alpha(icon)
+    cell_width = source.width / 3
+    cell_height = source.height / 3
+    for cell_index, atlas_index in enumerate(atlas_indices):
+        column = cell_index % 3
+        row = cell_index // 3
+        left = int(column * cell_width)
+        top = int(row * cell_height)
+        right = int((column + 1) * cell_width)
+        bottom = int((row + 1) * cell_height)
+        cell = source.crop((left, top, right, bottom))
+        icon = cell.resize((16, 16), Image.Resampling.LANCZOS)
         atlas.alpha_composite(icon, (atlas_index * 16, 0))
-
-
-def extract_ai_icon_cells(source: Image.Image) -> list[Image.Image]:
-    width, height = source.size
-
-    def is_background(pixel: tuple[int, int, int, int]) -> bool:
-        red, green, blue, alpha = pixel
-        return alpha > 0 and red > 220 and green < 80 and blue > 220
-
-    column_has_icon = []
-    for x in range(width):
-        non_background = 0
-        for y in range(height):
-            if not is_background(source.getpixel((x, y))):
-                non_background += 1
-        column_has_icon.append(non_background > 20)
-
-    ranges: list[tuple[int, int]] = []
-    start: int | None = None
-    for x, has_icon in enumerate(column_has_icon):
-        if has_icon and start is None:
-            start = x
-        elif not has_icon and start is not None:
-            if x - start > 20:
-                ranges.append((start, x - 1))
-            start = None
-
-    if start is not None and width - start > 20:
-        ranges.append((start, width - 1))
-
-    cells: list[Image.Image] = []
-    for left, right in ranges[:9]:
-        top = height
-        bottom = 0
-        for x in range(left, right + 1):
-            for y in range(height):
-                if not is_background(source.getpixel((x, y))):
-                    top = min(top, y)
-                    bottom = max(bottom, y)
-
-        if top >= bottom:
-            continue
-
-        pad = 10
-        left = max(0, left - pad)
-        right = min(width - 1, right + pad)
-        top = max(0, top - pad)
-        bottom = min(height - 1, bottom + pad)
-        crop = source.crop((left, top, right + 1, bottom + 1))
-        square_size = max(crop.width, crop.height)
-        square = img((square_size, square_size))
-        square.alpha_composite(crop, ((square_size - crop.width) // 2, (square_size - crop.height) // 2))
-        cells.append(square)
-
-    return cells
 
 
 def make_ui() -> None:

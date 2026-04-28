@@ -31,20 +31,24 @@ public sealed class EconomySystem
 
     public int SellShippedItems(ContentDatabase content)
     {
-        int earned = 0;
+        long earned = 0;
         foreach (InventorySlot slot in _shippingBin)
         {
-            if (slot.ItemId is null || !content.Items.TryGetValue(slot.ItemId, out ItemDefinition? item))
+            if (
+                slot.ItemId is null
+                || !content.Items.TryGetValue(slot.ItemId, out ItemDefinition? item)
+                || slot.Quantity <= 0
+            )
             {
                 continue;
             }
 
-            earned += item.SellPrice * slot.Quantity;
+            earned += (long)item.SellPrice * slot.Quantity;
         }
 
-        Coins += earned;
+        Coins = (int)Math.Min(int.MaxValue, Coins + earned);
         _shippingBin.Clear();
-        return earned;
+        return (int)Math.Min(int.MaxValue, earned);
     }
 
     public void SetCoins(int coins)

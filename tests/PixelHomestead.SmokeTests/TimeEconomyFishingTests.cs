@@ -75,6 +75,23 @@ public sealed class TimeEconomyFishingTests
     }
 
     [Fact]
+    public void Fishing_DoesNotReportCatchWhenInventoryIsFull()
+    {
+        ContentDatabase content = LoadContent();
+        GameState state = new(content);
+        GridPosition water = new(28, 24);
+        for (int slotIndex = 0; slotIndex < state.Inventory.Capacity; slotIndex++)
+        {
+            state.Inventory[slotIndex] = new InventorySlot { ItemId = "hoe", Quantity = 1 };
+        }
+
+        int startingEnergy = state.Energy.CurrentEnergy;
+
+        Assert.Null(state.Fishing.TryCatchFishAtWater(state.World, water, state.Inventory, content, state.Energy));
+        Assert.Equal(startingEnergy, state.Energy.CurrentEnergy);
+    }
+
+    [Fact]
     public void Energy_ClampRestoreAndRejectOverspend()
     {
         EnergySystem energy = new();
