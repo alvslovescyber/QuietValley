@@ -1,0 +1,51 @@
+[
+  {
+    "id": "grass",
+    "tileType": "Grass",
+    "blocksMovement": false,
+    "naturalDecoration": false,
+    "spriteKey": "terrain_grass"
+  },
+  {
+    "id": "tall_grass",
+    "tileType": "TallGrass",
+    "blocksMovement": false,
+    "naturalDecoration": true,
+    "spriteKey": "terrain_tall_grass"
+  },
+  {
+    "id": "flower",
+    "tileType": "Flower",
+    "blocksMovement": false,
+    "naturalDecoration": true,
+    "spriteKey": "terrain_flower"
+  },
+  {
+    "id": "path",
+    "tileType": "Path",
+    "blocksMovement": false,
+    "naturalDecoration": false,
+    "spriteKey": "terrain_path"
+  },
+  {
+    "id": "water",
+    "tileType": "Water",
+    "blocksMovement": true,
+    "naturalDecoration": false,
+    "spriteKey": "terrain_water"
+  },
+  {
+    "id": "tree",
+    "tileType": "Tree",
+    "blocksMovement": true,
+    "naturalDecoration": true,
+    "spriteKey": "prop_tree"
+  },
+  {
+    "id": "mushroom",
+    "tileType": "Mushroom",
+    "blocksMovement": true,
+    "naturalDecoration": true,
+    "spriteKey": "prop_mushroom"
+  }
+]

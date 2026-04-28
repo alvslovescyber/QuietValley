@@ -1,14 +1,14 @@
 using PixelHomestead.Core.Core;
 using PixelHomestead.Core.Data;
+using PixelHomestead.Core.Energy;
 using PixelHomestead.Core.Items;
 using PixelHomestead.Core.World;
 
-namespace PixelHomestead.Core.Systems;
+namespace PixelHomestead.Core.Fishing;
 
 public sealed class FishingSystem
 {
     private readonly Random _random = new();
-    private readonly string[] _fishIds = ["small_fish", "pond_carp", "river_minnow", "golden_fish"];
 
     public string? TryCatchFish(
         GameWorld world,
@@ -28,9 +28,30 @@ public sealed class FishingSystem
             return null;
         }
 
-        string fishId = _fishIds[_random.Next(_fishIds.Length)];
+        string fishId = SelectFish(content);
         inventory.Add(fishId, 1, content.Items);
         return fishId;
+    }
+
+    private string SelectFish(ContentDatabase content)
+    {
+        int totalWeight = content.Fish.Values.Sum(fish => Math.Max(0, fish.RarityWeight));
+        if (totalWeight <= 0)
+        {
+            return "small_fish";
+        }
+
+        int roll = _random.Next(totalWeight);
+        foreach (FishDefinition fish in content.Fish.Values)
+        {
+            roll -= Math.Max(0, fish.RarityWeight);
+            if (roll < 0)
+            {
+                return fish.ItemId;
+            }
+        }
+
+        return content.Fish.Values.First().ItemId;
     }
 
     private static IEnumerable<GridPosition> AdjacentPositions(GridPosition position)

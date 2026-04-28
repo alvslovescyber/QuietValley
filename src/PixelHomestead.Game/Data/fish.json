@@ -1,0 +1,30 @@
+[
+  {
+    "id": "small_fish",
+    "itemId": "small_fish",
+    "displayName": "Small Fish",
+    "rarityWeight": 45,
+    "waterType": "Pond"
+  },
+  {
+    "id": "pond_carp",
+    "itemId": "pond_carp",
+    "displayName": "Pond Carp",
+    "rarityWeight": 30,
+    "waterType": "Pond"
+  },
+  {
+    "id": "river_minnow",
+    "itemId": "river_minnow",
+    "displayName": "River Minnow",
+    "rarityWeight": 20,
+    "waterType": "Pond"
+  },
+  {
+    "id": "golden_fish",
+    "itemId": "golden_fish",
+    "displayName": "Golden Fish",
+    "rarityWeight": 5,
+    "waterType": "Pond"
+  }
+]

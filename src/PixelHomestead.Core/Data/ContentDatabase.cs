@@ -1,6 +1,8 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using PixelHomestead.Core.Fishing;
 using PixelHomestead.Core.Items;
+using PixelHomestead.Core.World;
 
 namespace PixelHomestead.Core.Data;
 
@@ -14,19 +16,31 @@ public sealed class ContentDatabase
 
     public required IReadOnlyDictionary<string, ItemDefinition> Items { get; init; }
     public required IReadOnlyDictionary<string, CropDefinition> Crops { get; init; }
+    public required IReadOnlyDictionary<string, ToolDefinition> Tools { get; init; }
+    public required IReadOnlyDictionary<string, FishDefinition> Fish { get; init; }
+    public required IReadOnlyDictionary<string, TileDefinition> Tiles { get; init; }
 
     public static ContentDatabase Load(string dataDirectory)
     {
         string itemsPath = Path.Combine(dataDirectory, "items.json");
         string cropsPath = Path.Combine(dataDirectory, "crops.json");
+        string toolsPath = Path.Combine(dataDirectory, "tools.json");
+        string fishPath = Path.Combine(dataDirectory, "fish.json");
+        string tilesPath = Path.Combine(dataDirectory, "tiles.json");
 
         ItemDefinition[] items = ReadArray<ItemDefinition>(itemsPath);
         CropDefinition[] crops = ReadArray<CropDefinition>(cropsPath);
+        ToolDefinition[] tools = ReadArray<ToolDefinition>(toolsPath);
+        FishDefinition[] fish = ReadArray<FishDefinition>(fishPath);
+        TileDefinition[] tiles = ReadArray<TileDefinition>(tilesPath);
 
         return new ContentDatabase
         {
             Items = items.ToDictionary(item => item.Id),
             Crops = crops.ToDictionary(crop => crop.Id),
+            Tools = tools.ToDictionary(tool => tool.Id),
+            Fish = fish.ToDictionary(fishDefinition => fishDefinition.Id),
+            Tiles = tiles.ToDictionary(tile => tile.Id),
         };
     }
 

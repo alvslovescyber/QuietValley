@@ -1,4 +1,4 @@
-namespace PixelHomestead.Core.Systems;
+namespace PixelHomestead.Core.Energy;
 
 public sealed class EnergySystem
 {

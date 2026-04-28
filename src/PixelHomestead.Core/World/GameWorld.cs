@@ -88,74 +88,127 @@ public sealed class GameWorld
 
     public static GameWorld CreateStarterWorld()
     {
-        GameWorld world = new(52, 36);
+        GameWorld world = new(60, 42);
 
         for (int tileY = 0; tileY < world.Height; tileY++)
         {
             for (int tileX = 0; tileX < world.Width; tileX++)
             {
-                if (tileX <= 1 || tileY <= 1 || tileX >= world.Width - 2 || tileY >= world.Height - 2)
+                GridPosition position = new(tileX, tileY);
+                bool borderForest = tileX <= 1 || tileY <= 1 || tileX >= world.Width - 2 || tileY >= world.Height - 2;
+                bool upperForestPatch = tileY <= 6 && tileX is > 20 and < 53 && (tileX + tileY) % 3 != 0;
+                bool lowerForestPatch = tileY >= 32 && tileX is > 27 and < 56 && (tileX + tileY) % 4 != 1;
+                if (borderForest || upperForestPatch || lowerForestPatch)
                 {
-                    world.SetTile(new GridPosition(tileX, tileY), TileType.Tree);
+                    world.SetTile(position, TileType.Tree);
+                }
+                else if ((tileX * 17 + tileY * 23) % 31 == 0)
+                {
+                    world.SetTile(position, TileType.TallGrass);
+                }
+                else if ((tileX * 13 + tileY * 29) % 43 == 0)
+                {
+                    world.SetTile(position, TileType.Flower);
                 }
             }
         }
 
         for (int tileY = 7; tileY <= 13; tileY++)
         {
-            for (int tileX = 5; tileX <= 13; tileX++)
+            for (int tileX = 5; tileX <= 14; tileX++)
             {
                 world.SetTile(new GridPosition(tileX, tileY), TileType.House);
             }
         }
 
-        world.SetTile(new GridPosition(9, 14), TileType.SleepSpot);
+        world.SetTile(new GridPosition(10, 14), TileType.SleepSpot);
 
-        for (int tileY = 17; tileY <= 26; tileY++)
+        for (int tileY = 17; tileY <= 27; tileY++)
         {
-            for (int tileX = 7; tileX <= 18; tileX++)
+            for (int tileX = 6; tileX <= 19; tileX++)
             {
-                world.SetTile(new GridPosition(tileX, tileY), TileType.Dirt);
+                bool cutCorner = (tileX < 8 && tileY < 19) || (tileX > 17 && tileY > 25) || (tileX < 8 && tileY > 25);
+                if (!cutCorner)
+                {
+                    world.SetTile(new GridPosition(tileX, tileY), TileType.Dirt);
+                }
             }
         }
 
-        for (int tileY = 9; tileY <= 23; tileY++)
+        for (int tileY = 9; tileY <= 26; tileY++)
         {
-            for (int tileX = 30; tileX <= 43; tileX++)
+            for (int tileX = 31; tileX <= 49; tileX++)
             {
-                double normalized = Math.Pow((tileX - 36.5) / 7.0, 2) + Math.Pow((tileY - 16.0) / 7.0, 2);
-                if (normalized < 1.0)
+                double normalized = Math.Pow((tileX - 40.2) / 8.2, 2) + Math.Pow((tileY - 17.3) / 7.6, 2);
+                double wobble = Math.Sin(tileX * 1.7) * 0.07 + Math.Cos(tileY * 1.3) * 0.08;
+                if (normalized + wobble < 1.0)
                 {
                     world.SetTile(new GridPosition(tileX, tileY), TileType.Water);
                 }
             }
         }
 
-        for (int tileX = 10; tileX <= 38; tileX++)
+        GridPosition[] path =
         {
-            world.SetTile(new GridPosition(tileX, 15), TileType.Path);
+            new(10, 15),
+            new(11, 15),
+            new(12, 15),
+            new(13, 15),
+            new(14, 15),
+            new(15, 15),
+            new(16, 15),
+            new(17, 15),
+            new(18, 15),
+            new(19, 15),
+            new(20, 15),
+            new(21, 16),
+            new(22, 16),
+            new(23, 17),
+            new(24, 17),
+            new(25, 17),
+            new(26, 17),
+            new(27, 16),
+            new(28, 16),
+            new(29, 16),
+            new(30, 15),
+            new(31, 15),
+            new(32, 14),
+            new(33, 14),
+            new(34, 14),
+            new(23, 18),
+            new(23, 19),
+            new(22, 20),
+            new(22, 21),
+            new(22, 22),
+            new(22, 23),
+            new(21, 24),
+            new(21, 25),
+            new(20, 26),
+            new(19, 27),
+            new(18, 28),
+            new(17, 29),
+        };
+
+        foreach (GridPosition pathTile in path)
+        {
+            world.SetTile(pathTile, TileType.Path);
         }
 
-        for (int tileY = 14; tileY <= 30; tileY++)
-        {
-            world.SetTile(new GridPosition(23, tileY), TileType.Path);
-        }
-
-        for (int tileX = 6; tileX <= 19; tileX++)
+        for (int tileX = 5; tileX <= 20; tileX++)
         {
             world.SetTile(new GridPosition(tileX, 16), TileType.Fence);
-            world.SetTile(new GridPosition(tileX, 27), TileType.Fence);
+            world.SetTile(new GridPosition(tileX, 28), TileType.Fence);
         }
 
-        for (int tileY = 17; tileY <= 26; tileY++)
+        for (int tileY = 17; tileY <= 27; tileY++)
         {
-            world.SetTile(new GridPosition(6, tileY), TileType.Fence);
-            world.SetTile(new GridPosition(19, tileY), TileType.Fence);
+            world.SetTile(new GridPosition(5, tileY), TileType.Fence);
+            world.SetTile(new GridPosition(20, tileY), TileType.Fence);
         }
 
         world.SetTile(new GridPosition(13, 16), TileType.Path);
-        world.SetTile(new GridPosition(13, 27), TileType.Path);
-        world.SetTile(new GridPosition(21, 17), TileType.ShippingBox);
+        world.SetTile(new GridPosition(13, 28), TileType.Path);
+        world.SetTile(new GridPosition(22, 17), TileType.ShippingBox);
 
         GridPosition[] bushes =
         [
@@ -177,6 +230,10 @@ public sealed class GameWorld
             new(41, 5),
             new(42, 5),
             new(43, 5),
+            new(47, 28),
+            new(49, 29),
+            new(52, 28),
+            new(54, 31),
         ];
 
         foreach (GridPosition decoration in bushes)
@@ -198,6 +255,10 @@ public sealed class GameWorld
             new(14, 29),
             new(15, 29),
             new(5, 20),
+            new(48, 27),
+            new(50, 27),
+            new(53, 29),
+            new(39, 29),
         ];
 
         foreach (GridPosition flower in flowers)
@@ -220,6 +281,11 @@ public sealed class GameWorld
             new(47, 23),
             new(48, 23),
             new(26, 23),
+            new(27, 24),
+            new(28, 25),
+            new(50, 26),
+            new(51, 26),
+            new(52, 26),
         ];
 
         foreach (GridPosition grass in tallGrass)
@@ -227,13 +293,22 @@ public sealed class GameWorld
             world.SetTile(grass, TileType.TallGrass);
         }
 
-        GridPosition[] mushrooms = [new(43, 21), new(46, 20), new(45, 24)];
+        GridPosition[] mushrooms = [new(48, 22), new(51, 21), new(50, 25), new(46, 24)];
         foreach (GridPosition mushroom in mushrooms)
         {
             world.SetTile(mushroom, TileType.Mushroom);
         }
 
-        GridPosition[] stones = [new(27, 15), new(28, 14), new(29, 13), new(41, 12), new(42, 12), new(22, 26)];
+        GridPosition[] stones =
+        [
+            new(27, 15),
+            new(28, 14),
+            new(29, 13),
+            new(42, 12),
+            new(43, 12),
+            new(22, 26),
+            new(34, 25),
+        ];
         foreach (GridPosition stone in stones)
         {
             world.SetTile(stone, TileType.Stone);
@@ -241,6 +316,7 @@ public sealed class GameWorld
 
         world.SetTile(new GridPosition(18, 14), TileType.Barrel);
         world.SetTile(new GridPosition(19, 14), TileType.Barrel);
+        world.SetTile(new GridPosition(21, 14), TileType.Barrel);
 
         return world;
     }

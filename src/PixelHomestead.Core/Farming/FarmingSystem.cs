@@ -1,9 +1,10 @@
 using PixelHomestead.Core.Core;
 using PixelHomestead.Core.Data;
+using PixelHomestead.Core.Energy;
 using PixelHomestead.Core.Items;
 using PixelHomestead.Core.World;
 
-namespace PixelHomestead.Core.Systems;
+namespace PixelHomestead.Core.Farming;
 
 public sealed class FarmingSystem
 {

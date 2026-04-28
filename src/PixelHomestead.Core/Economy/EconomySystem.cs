@@ -1,7 +1,7 @@
 using PixelHomestead.Core.Data;
 using PixelHomestead.Core.Items;
 
-namespace PixelHomestead.Core.Systems;
+namespace PixelHomestead.Core.Economy;
 
 public sealed class EconomySystem
 {

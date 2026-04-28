@@ -1,4 +1,4 @@
-namespace PixelHomestead.Core.Systems;
+namespace PixelHomestead.Core.Time;
 
 public sealed class TimeSystem
 {

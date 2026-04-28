@@ -12,6 +12,9 @@ public sealed class ContentDatabaseTests
 
         Assert.Contains("hoe", content.Items.Keys);
         Assert.Contains("turnip", content.Crops.Keys);
+        Assert.Contains("fishing_rod", content.Tools.Keys);
+        Assert.Contains("golden_fish", content.Fish.Keys);
+        Assert.Contains("grass", content.Tiles.Keys);
         Assert.Equal("Turnip Seed", content.Items["turnip_seed"].DisplayName);
         Assert.Equal("turnip", content.FindCropBySeed("turnip_seed")?.Id);
     }

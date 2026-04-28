@@ -47,6 +47,8 @@ dotnet csharpier check .
 - Player movement, facing direction, smooth camera follow, collision, and prompts
 - Data-driven items and crops in JSON
 - Inventory stacking, tools, farming, fishing placeholder, day/time, energy, economy, sleep, and JSON save/load
+- Deterministic generated pixel atlases in `src/PixelHomestead.Game/Assets/Generated`
+- Continuous player movement with acceleration, deceleration, walk animation, smoother collision, dust particles, tool feedback, and sleep fade
 
 ## Architecture
 
@@ -54,11 +56,29 @@ dotnet csharpier check .
 - `src/PixelHomestead.Core/Player`: player state
 - `src/PixelHomestead.Core/World`: tile map, collision, crop state
 - `src/PixelHomestead.Core/Items`: item, crop, inventory, and tool models
-- `src/PixelHomestead.Core/Systems`: farming, fishing, time, energy, economy, save systems
+- `src/PixelHomestead.Core/Farming`: farming system
+- `src/PixelHomestead.Core/Fishing`: fishing system and fish definitions
+- `src/PixelHomestead.Core/Saving`: save system
+- `src/PixelHomestead.Core/Economy`: shipping and coin economy
+- `src/PixelHomestead.Core/Time`: day/time system
+- `src/PixelHomestead.Core/Energy`: energy system
 - `src/PixelHomestead.Core/Data`: JSON data loading
 - `src/PixelHomestead.Game`: MonoGame rendering, input, menus, HUD, and app entrypoint
 - `src/PixelHomestead.Game/Data`: item and crop definitions copied to output
 - `src/PixelHomestead.Game/Assets`: replacement-ready sprite, tile, font, and audio folders
+- `src/PixelHomestead.Game/Rendering`: world rendering, camera, and generated atlas loading
+- `src/PixelHomestead.Game/Player`: continuous player controller and renderer
+- `src/PixelHomestead.Game/Effects`: particles and game-feel effects
+- `src/PixelHomestead.Game/Input`: input bindings and future remapping structure
+- `src/PixelHomestead.Game/UI`: game UI renderer and pixel font
+
+## Regenerate Pixel Assets
+
+```bash
+python3 scripts/generate_assets.py
+```
+
+The generated PNG atlases are original project assets and are checked in so the game runs without an asset-generation step.
 
 ## Save Location
 

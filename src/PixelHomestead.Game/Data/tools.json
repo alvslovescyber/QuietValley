@@ -1,0 +1,42 @@
+[
+  {
+    "id": "hoe",
+    "itemId": "hoe",
+    "displayName": "Hoe",
+    "energyCost": 2,
+    "useDurationSeconds": 0.18,
+    "feedbackCue": "tool_hoe"
+  },
+  {
+    "id": "watering_can",
+    "itemId": "watering_can",
+    "displayName": "Watering Can",
+    "energyCost": 1,
+    "useDurationSeconds": 0.2,
+    "feedbackCue": "tool_water"
+  },
+  {
+    "id": "axe",
+    "itemId": "axe",
+    "displayName": "Axe",
+    "energyCost": 3,
+    "useDurationSeconds": 0.22,
+    "feedbackCue": "tool_chop"
+  },
+  {
+    "id": "pickaxe",
+    "itemId": "pickaxe",
+    "displayName": "Pickaxe",
+    "energyCost": 3,
+    "useDurationSeconds": 0.22,
+    "feedbackCue": "tool_hit"
+  },
+  {
+    "id": "fishing_rod",
+    "itemId": "fishing_rod",
+    "displayName": "Fishing Rod",
+    "energyCost": 3,
+    "useDurationSeconds": 0.35,
+    "feedbackCue": "fish_cast"
+  }
+]
