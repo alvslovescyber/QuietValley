@@ -25,6 +25,8 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
     private readonly PlayerController _player = new();
     private readonly ParticleSystem _particles = new();
     private readonly AudioSystem _audio = new();
+    private readonly ToastLog _toasts = new();
+    private readonly DialogueState _dialogue = new();
 
     private SpriteBatch? _spriteBatch;
     private RenderTarget2D? _renderTarget;
@@ -37,11 +39,17 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
     private ContentDatabase? _content;
     private GameState? _state;
     private SaveManager? _saveManager;
+    private GameSettings _settings = new();
     private GameScreen _screen = GameScreen.MainMenu;
     private GameScreen _returnFromSettings = GameScreen.MainMenu;
     private double _waterAnimation;
     private float _sleepFade;
-    private int _settingsScale = 2;
+    private float _sprintEnergyTimer;
+    private int? _draggedInventorySlotIndex;
+    private bool _isFishing;
+    private float _fishingTimer;
+    private bool _fishBiting;
+    private GridPosition _fishingTarget;
 
     public CozyGame()
     {
@@ -53,6 +61,7 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
         };
 
         Window.Title = "Pixel Homestead";
+        Window.AllowUserResizing = true;
         IsMouseVisible = true;
         Content.RootDirectory = "Content";
     }
@@ -68,6 +77,8 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
         _worldRenderer = new WorldRenderer(_art, _pixel);
         _playerRenderer = new PlayerRenderer(_art, _pixel);
         _ui = new GameUiRenderer(_pixel, _font, _art);
+        _settings = GameSettings.Load();
+        ApplySettings();
 
         string dataDirectory = Path.Combine(AppContext.BaseDirectory, "Data");
         _content = ContentDatabase.Load(dataDirectory);
@@ -88,6 +99,7 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
         float deltaSeconds = (float)gameTime.ElapsedGameTime.TotalSeconds;
         _waterAnimation += deltaSeconds;
         _sleepFade = Math.Max(0, _sleepFade - deltaSeconds * 1.8f);
+        _toasts.Update(deltaSeconds);
 
         if (_screen == GameScreen.Playing)
         {
@@ -98,6 +110,7 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
             UpdateMenus();
         }
 
+        UpdateFishing(deltaSeconds);
         _particles.Update(deltaSeconds);
         base.Update(gameTime);
     }
@@ -123,7 +136,7 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
                 RequireUi().DrawCredits(_spriteBatch);
                 break;
             case GameScreen.Settings:
-                RequireUi().DrawSettings(_spriteBatch, mouse, _settingsScale);
+                RequireUi().DrawSettings(_spriteBatch, mouse, _settings);
                 break;
             default:
                 DrawGameplay(_spriteBatch);
@@ -146,6 +159,13 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
         GameState state = RequireState();
         state.Time.Update(deltaSeconds);
 
+        if (_input.Pressed(Keys.F3))
+        {
+            _settings.ShowCollisionDebug = !_settings.ShowCollisionDebug;
+            _settings.Save();
+            _toasts.Add(_settings.ShowCollisionDebug ? "Collision debug on" : "Collision debug off");
+        }
+
         if (_bindings.PausePressed(_input))
         {
             _screen = GameScreen.Pause;
@@ -161,8 +181,14 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
         }
 
         UpdateHotbarSelection(state);
+        if (TrySelectHotbarWithMouse(state))
+        {
+            return;
+        }
 
-        bool spawnedDust = _player.Update(state.World, state.Player, _bindings.ReadMovement(_input), deltaSeconds);
+        Vector2 movement = _bindings.ReadMovement(_input);
+        bool sprinting = CanSprint(state, movement, deltaSeconds);
+        bool spawnedDust = _player.Update(state.World, state.Player, movement, sprinting, deltaSeconds);
         if (spawnedDust)
         {
             _particles.SpawnDust(_player.Feet);
@@ -170,7 +196,18 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
 
         if (_bindings.InteractPressed(_input) || _bindings.ToolUsePressed(_input))
         {
-            UseSelectedAction();
+            GridPosition? mouseTarget = _bindings.ToolUsePressed(_input) ? MouseTargetIfInRange() : null;
+            if (
+                _bindings.ToolUsePressed(_input)
+                && mouseTarget is null
+                && !RequireUi().HotbarSlotAt(VirtualMousePosition()).HasValue
+            )
+            {
+                _toasts.Add("Too far away.", "warn");
+                return;
+            }
+
+            UseSelectedAction(mouseTarget ?? _player.InteractionTarget());
         }
 
         _camera.Follow(_player.Center, state.World, deltaSeconds);
@@ -232,9 +269,11 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
         }
         else if (_screen == GameScreen.Inventory)
         {
+            HandleInventoryMouse(mouse);
             if (_bindings.CancelPressed(_input) || _bindings.InventoryPressed(_input))
             {
                 _screen = GameScreen.Playing;
+                _draggedInventorySlotIndex = null;
                 _audio.PlaySfx("inventory_close");
             }
         }
@@ -245,17 +284,40 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
                 _screen = _returnFromSettings;
                 _audio.PlaySfx("menu_close");
             }
-            else if (Clicked(mouse, new Rectangle(226, 160, 54, 24)))
+            else if (Clicked(mouse, new Rectangle(344, 136, 26, 22)))
             {
-                _settingsScale = 2;
+                ChangeMusicVolume(-0.1f);
             }
-            else if (Clicked(mouse, new Rectangle(294, 160, 54, 24)))
+            else if (Clicked(mouse, new Rectangle(380, 136, 26, 22)))
             {
-                _settingsScale = 3;
+                ChangeMusicVolume(0.1f);
             }
-            else if (Clicked(mouse, new Rectangle(362, 160, 54, 24)))
+            else if (Clicked(mouse, new Rectangle(344, 160, 26, 22)))
             {
-                _settingsScale = 4;
+                ChangeSfxVolume(-0.1f);
+            }
+            else if (Clicked(mouse, new Rectangle(380, 160, 26, 22)))
+            {
+                ChangeSfxVolume(0.1f);
+            }
+            else if (Clicked(mouse, new Rectangle(344, 184, 26, 22)))
+            {
+                ChangeWindowScale(-1);
+            }
+            else if (Clicked(mouse, new Rectangle(380, 184, 26, 22)))
+            {
+                ChangeWindowScale(1);
+            }
+            else if (Clicked(mouse, new Rectangle(344, 208, 62, 22)))
+            {
+                _settings.Fullscreen = !_settings.Fullscreen;
+                ApplySettings();
+                _settings.Save();
+            }
+            else if (Clicked(mouse, new Rectangle(344, 232, 62, 22)))
+            {
+                _settings.ShowCollisionDebug = !_settings.ShowCollisionDebug;
+                _settings.Save();
             }
         }
         else if (_screen == GameScreen.Credits && (_bindings.CancelPressed(_input) || _input.LeftClick()))
@@ -270,10 +332,26 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
         GameState state = RequireState();
         Vector2 camera = _camera.Position;
         RequireWorldRenderer().DrawTerrain(spriteBatch, state, camera, _waterAnimation);
+        RequireWorldRenderer().DrawTargetHighlight(spriteBatch, _player.InteractionTarget(), camera);
         RequirePlayerRenderer().Draw(spriteBatch, _player, camera);
+        if (_isFishing)
+        {
+            RequireWorldRenderer().DrawFishingBobber(spriteBatch, _fishingTarget, camera, _fishBiting);
+        }
         _particles.Draw(spriteBatch, RequirePixel(), camera);
         RequireWorldRenderer().DrawWaterOverlay(spriteBatch, state.World, camera, _waterAnimation);
-        RequireUi().DrawHud(spriteBatch, state);
+        if (_settings.ShowCollisionDebug)
+        {
+            RequireWorldRenderer()
+                .DrawCollisionDebug(
+                    spriteBatch,
+                    state.World,
+                    camera,
+                    _player.CollisionBox,
+                    _player.InteractionRectangle()
+                );
+        }
+        RequireUi().DrawHud(spriteBatch, state, VirtualMousePosition());
 
         string? prompt = InteractionPrompt(state);
         if (prompt is not null)
@@ -283,20 +361,21 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
 
         if (_screen == GameScreen.Inventory)
         {
-            RequireUi().DrawInventory(spriteBatch, state);
+            RequireUi().DrawInventory(spriteBatch, state, VirtualMousePosition(), _draggedInventorySlotIndex);
         }
         else if (_screen == GameScreen.Pause)
         {
             RequireUi().DrawPause(spriteBatch, VirtualMousePosition());
         }
 
+        _toasts.Draw(spriteBatch, RequireUi());
+        RequireUi().DrawDialogue(spriteBatch, _dialogue);
         RequireUi().DrawFade(spriteBatch, _sleepFade);
     }
 
-    private void UseSelectedAction()
+    private void UseSelectedAction(GridPosition target)
     {
         GameState state = RequireState();
-        GridPosition target = _player.InteractionTarget();
         InventorySlot selectedSlot = state.Inventory[state.Player.SelectedHotbarIndex];
         ItemDefinition? selectedItem = selectedSlot.ItemId is null
             ? null
@@ -309,16 +388,25 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
             _sleepFade = 1f;
             _particles.SpawnPickup(_player.Center);
             _audio.PlaySfx("sleep");
+            _toasts.Add("A new day begins.");
             return;
         }
 
         if (state.World.GetTile(target).Type == TileType.ShippingBox)
         {
-            if (state.Economy.ShipFromInventory(state.Inventory, state.Player.SelectedHotbarIndex))
+            if (state.Economy.ShipFromInventory(state.Inventory, state.Player.SelectedHotbarIndex, state.Content))
             {
                 state.StatusMessage = "Item placed in shipping box.";
                 _particles.SpawnPickup(_player.Center);
                 _audio.PlaySfx("ship_item");
+                _toasts.Add("Item placed in shipping box.", "item");
+            }
+            else
+            {
+                _toasts.Add(
+                    selectedItem?.Type == ItemType.Tool ? "Tools cannot be shipped." : "Select a sellable item.",
+                    "warn"
+                );
             }
             return;
         }
@@ -331,12 +419,14 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
             state.StatusMessage = "Harvested crop.";
             _particles.SpawnPickup(_player.Center);
             _audio.PlaySfx("item_pickup");
+            _toasts.Add("Harvested crop.", "item");
             return;
         }
 
         if (selectedItem is null)
         {
             state.StatusMessage = "Select a tool or seed.";
+            _toasts.Add("Select a tool or seed.", "warn");
             return;
         }
 
@@ -346,7 +436,7 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
         {
             ToolKind.Hoe => state.Farming.Till(state.World, target, state.Energy),
             ToolKind.WateringCan => state.Farming.Water(state.World, target, state.Energy),
-            ToolKind.FishingRod => TryFish(state),
+            ToolKind.FishingRod => StartOrResolveFishing(state, target),
             ToolKind.Axe => ClearSimpleObstacle(state, target, TileType.Bush, 3),
             ToolKind.Pickaxe => ClearSimpleObstacle(state, target, TileType.Stone, 3),
             _ => selectedItem.Type == ItemType.Seed
@@ -361,20 +451,65 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
                 state.Content.Tools.Values.FirstOrDefault(tool => tool.ItemId == selectedItem.Id)?.FeedbackCue
                     ?? "tool_use"
             );
+            _toasts.Add($"{selectedItem.DisplayName} used.");
         }
         else
         {
             state.StatusMessage = "Nothing happened.";
             _audio.PlaySfx("tool_fail");
+            _toasts.Add(InvalidActionMessage(state, target, selectedItem), "warn");
         }
+    }
+
+    private bool StartOrResolveFishing(GameState state, GridPosition target)
+    {
+        if (_isFishing)
+        {
+            if (!_fishBiting)
+            {
+                _toasts.Add("Wait for a bite.", "fish");
+                return false;
+            }
+
+            return TryFish(state);
+        }
+
+        bool nearWater =
+            state.World.GetTile(target).IsWater
+            || NeighborTargets(_player.InteractionTarget()).Any(position => state.World.GetTile(position).IsWater);
+        if (!nearWater || !state.Energy.HasEnough(3))
+        {
+            return false;
+        }
+
+        _isFishing = true;
+        _fishBiting = false;
+        _fishingTimer = 1.2f + Random.Shared.NextSingle() * 1.8f;
+        _fishingTarget = state.World.GetTile(target).IsWater
+            ? target
+            : NeighborTargets(_player.InteractionTarget()).First(position => state.World.GetTile(position).IsWater);
+        state.StatusMessage = "Cast your line...";
+        _toasts.Add("Cast your line.", "fish");
+        return true;
     }
 
     private bool TryFish(GameState state)
     {
-        string? fishId = state.Fishing.TryCatchFish(
+        Vector2 bobberCenter = new(
+            _fishingTarget.X * GameConstants.TileSize + GameConstants.TileSize / 2f,
+            _fishingTarget.Y * GameConstants.TileSize + GameConstants.TileSize / 2f
+        );
+        if (Vector2.Distance(_player.Center, bobberCenter) > 48f)
+        {
+            _isFishing = false;
+            _fishBiting = false;
+            _toasts.Add("Fishing cancelled.", "fish");
+            return false;
+        }
+
+        string? fishId = state.Fishing.TryCatchFishAtWater(
             state.World,
-            state.Player.TilePosition,
-            state.Player.Facing,
+            _fishingTarget,
             state.Inventory,
             state.Content,
             state.Energy
@@ -387,18 +522,81 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
         state.StatusMessage = $"Caught {state.Content.Items[fishId].DisplayName}!";
         _particles.SpawnPickup(_player.Center);
         _audio.PlaySfx("fish_catch");
+        _toasts.Add($"Caught {state.Content.Items[fishId].DisplayName}!", "fish");
+        _isFishing = false;
+        _fishBiting = false;
         return true;
+    }
+
+    private void UpdateFishing(float deltaSeconds)
+    {
+        if (!_isFishing || _fishBiting)
+        {
+            return;
+        }
+
+        _fishingTimer -= deltaSeconds;
+        if (_fishingTimer <= 0)
+        {
+            _fishBiting = true;
+            _toasts.Add("Bite! Press E or click.", "fish");
+            _audio.PlaySfx("fish_bite");
+        }
+    }
+
+    private static IEnumerable<GridPosition> NeighborTargets(GridPosition position)
+    {
+        yield return position;
+        yield return position.Neighbor(Direction.Up);
+        yield return position.Neighbor(Direction.Down);
+        yield return position.Neighbor(Direction.Left);
+        yield return position.Neighbor(Direction.Right);
+    }
+
+    private static string InvalidActionMessage(GameState state, GridPosition target, ItemDefinition selectedItem)
+    {
+        int energyCost =
+            state.Content.Tools.Values.FirstOrDefault(tool => tool.ItemId == selectedItem.Id)?.EnergyCost ?? 0;
+        if (energyCost > 0 && !state.Energy.HasEnough(energyCost))
+        {
+            return "Not enough energy.";
+        }
+
+        if (selectedItem.Type == ItemType.Seed && state.World.GetTile(target).Type != TileType.Soil)
+        {
+            return "Seeds need tilled soil.";
+        }
+
+        if (selectedItem.ToolKind == ToolKind.WateringCan && state.World.GetCrop(target) is null)
+        {
+            return "Water planted crops.";
+        }
+
+        if (selectedItem.ToolKind == ToolKind.FishingRod)
+        {
+            return "Cast near water.";
+        }
+
+        return "Nothing happened.";
     }
 
     private string? InteractionPrompt(GameState state)
     {
         GridPosition target = _player.InteractionTarget();
+        InventorySlot selectedSlot = state.Inventory[state.Player.SelectedHotbarIndex];
+        ItemDefinition? selectedItem = selectedSlot.ItemId is null ? null : state.Content.Items[selectedSlot.ItemId];
         return state.World.GetTile(target).Type switch
         {
             TileType.SleepSpot => "Press E to Sleep",
             TileType.ShippingBox => "Press E to Ship",
-            TileType.Water => "Use rod to Fish",
-            TileType.Soil when state.World.GetCrop(target) is null => "Use seed to Plant",
+            TileType.Water when selectedItem?.ToolKind == ToolKind.FishingRod => "Press E to Fish",
+            TileType.Water => "Use Rod to Fish",
+            TileType.Dirt or TileType.Grass when selectedItem?.ToolKind == ToolKind.Hoe => "Use Hoe to Till",
+            TileType.Soil when state.World.GetCrop(target) is null && selectedItem?.Type == ItemType.Seed =>
+                "Use Seed to Plant",
+            TileType.Soil
+                when state.World.GetCrop(target) is not null && selectedItem?.ToolKind == ToolKind.WateringCan =>
+                "Water Crop",
             _ => state.World.GetCrop(target) is not null ? "Press E to Harvest" : null,
         };
     }
@@ -411,8 +609,136 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
             if (_input.Pressed(keys[index]))
             {
                 state.Player.SelectedHotbarIndex = index;
+                _toasts.Add(SelectedItemText(state));
             }
         }
+    }
+
+    private bool TrySelectHotbarWithMouse(GameState state)
+    {
+        if (!_input.LeftClick())
+        {
+            return false;
+        }
+
+        int? hotbarSlot = RequireUi().HotbarSlotAt(VirtualMousePosition());
+        if (hotbarSlot is null)
+        {
+            return false;
+        }
+
+        state.Player.SelectedHotbarIndex = hotbarSlot.Value;
+        _toasts.Add(SelectedItemText(state));
+        _audio.PlaySfx("ui_select");
+        return true;
+    }
+
+    private string SelectedItemText(GameState state)
+    {
+        InventorySlot slot = state.Inventory[state.Player.SelectedHotbarIndex];
+        return slot.ItemId is null
+            ? "Empty slot selected."
+            : $"{state.Content.Items[slot.ItemId].DisplayName} selected.";
+    }
+
+    private bool CanSprint(GameState state, Vector2 movement, float deltaSeconds)
+    {
+        if (!_bindings.SprintDown(_input) || movement == Vector2.Zero || state.Energy.CurrentEnergy <= 0)
+        {
+            _sprintEnergyTimer = 0;
+            return false;
+        }
+
+        _sprintEnergyTimer += deltaSeconds;
+        if (_sprintEnergyTimer >= 0.75f)
+        {
+            _sprintEnergyTimer = 0;
+            if (!state.Energy.Spend(1))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private GridPosition? MouseTargetIfInRange()
+    {
+        Point mouse = VirtualMousePosition();
+        Vector2 world = new(mouse.X + _camera.Position.X, mouse.Y + _camera.Position.Y);
+        return _player.MouseTarget(world);
+    }
+
+    private void HandleInventoryMouse(Point mouse)
+    {
+        if (!_input.LeftClick())
+        {
+            return;
+        }
+
+        int? slotIndex = GameUiRenderer.InventorySlotAt(mouse);
+        if (slotIndex is null)
+        {
+            _draggedInventorySlotIndex = null;
+            return;
+        }
+
+        GameState state = RequireState();
+        if (_draggedInventorySlotIndex is null)
+        {
+            if (slotIndex.Value < GameConstants.HotbarSlots)
+            {
+                state.Player.SelectedHotbarIndex = slotIndex.Value;
+            }
+
+            if (!state.Inventory[slotIndex.Value].IsEmpty)
+            {
+                _draggedInventorySlotIndex = slotIndex.Value;
+                _audio.PlaySfx("ui_pickup");
+            }
+
+            return;
+        }
+
+        state.Inventory.MoveOrMerge(_draggedInventorySlotIndex.Value, slotIndex.Value, state.Content.Items);
+        if (slotIndex.Value < GameConstants.HotbarSlots)
+        {
+            state.Player.SelectedHotbarIndex = slotIndex.Value;
+        }
+
+        _draggedInventorySlotIndex = null;
+        _audio.PlaySfx("ui_drop");
+    }
+
+    private void ChangeMusicVolume(float delta)
+    {
+        _settings.MusicVolume = Math.Clamp(_settings.MusicVolume + delta, 0f, 1f);
+        _audio.SetMusicVolume(_settings.MusicVolume);
+        _settings.Save();
+    }
+
+    private void ChangeSfxVolume(float delta)
+    {
+        _settings.SfxVolume = Math.Clamp(_settings.SfxVolume + delta, 0f, 1f);
+        _audio.SetSfxVolume(_settings.SfxVolume);
+        _settings.Save();
+    }
+
+    private void ChangeWindowScale(int delta)
+    {
+        _settings.WindowScale = Math.Clamp(_settings.WindowScale + delta, 1, 4);
+        ApplySettings();
+        _settings.Save();
+    }
+
+    private void ApplySettings()
+    {
+        _audio.SetMusicVolume(_settings.MusicVolume);
+        _audio.SetSfxVolume(_settings.SfxVolume);
+        _graphics.PreferredBackBufferWidth = GameConstants.VirtualWidth * _settings.WindowScale;
+        _graphics.PreferredBackBufferHeight = GameConstants.VirtualHeight * _settings.WindowScale;
+        _graphics.IsFullScreen = _settings.Fullscreen;
+        _graphics.ApplyChanges();
     }
 
     private void StartNewGame()
@@ -443,6 +769,7 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
     {
         RequireSaveManager().Save(RequireState());
         RequireState().StatusMessage = "Game saved.";
+        _toasts.Add("Game saved.");
     }
 
     private static bool ClearSimpleObstacle(GameState state, GridPosition target, TileType obstacleType, int energyCost)
@@ -483,7 +810,7 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
         int scale = Math.Max(
             1,
             Math.Min(
-                _settingsScale,
+                _settings.WindowScale,
                 Math.Min(
                     GraphicsDevice.PresentationParameters.BackBufferWidth / GameConstants.VirtualWidth,
                     GraphicsDevice.PresentationParameters.BackBufferHeight / GameConstants.VirtualHeight

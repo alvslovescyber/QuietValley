@@ -55,6 +55,24 @@ public sealed class FarmingSystemTests
         Assert.Equal(20, inventory.Slots.Sum(slot => slot.Quantity));
     }
 
+    [Fact]
+    public void Inventory_MoveMergesStacksAndFailedAddDoesNotPartiallyMutate()
+    {
+        ContentDatabase content = LoadContent();
+        Inventory inventory = new(2);
+
+        Assert.False(inventory.Add("turnip_seed", 200, content.Items));
+        Assert.All(inventory.Slots, slot => Assert.True(slot.IsEmpty));
+
+        inventory[0] = new InventorySlot { ItemId = "turnip_seed", Quantity = 95 };
+        inventory[1] = new InventorySlot { ItemId = "turnip_seed", Quantity = 4 };
+
+        inventory.MoveOrMerge(1, 0, content.Items);
+
+        Assert.Equal(99, inventory[0].Quantity);
+        Assert.True(inventory[1].IsEmpty);
+    }
+
     private static GameState CreateState()
     {
         return new GameState(LoadContent());

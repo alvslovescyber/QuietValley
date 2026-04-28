@@ -50,6 +50,36 @@
     "sellPrice": 0
   },
   {
+    "id": "scythe",
+    "displayName": "Scythe",
+    "description": "Prepared for clearing grass in a later pass.",
+    "type": "Tool",
+    "toolKind": "None",
+    "iconKey": "tool_scythe",
+    "maxStack": 1,
+    "sellPrice": 0
+  },
+  {
+    "id": "hammer",
+    "displayName": "Hammer",
+    "description": "Prepared for building and upgrades later.",
+    "type": "Tool",
+    "toolKind": "None",
+    "iconKey": "tool_hammer",
+    "maxStack": 1,
+    "sellPrice": 0
+  },
+  {
+    "id": "shovel",
+    "displayName": "Shovel",
+    "description": "Prepared for path and soil cleanup later.",
+    "type": "Tool",
+    "toolKind": "None",
+    "iconKey": "tool_shovel",
+    "maxStack": 1,
+    "sellPrice": 0
+  },
+  {
     "id": "turnip_seed",
     "displayName": "Turnip Seed",
     "description": "A hardy spring seed. Grows quickly.",

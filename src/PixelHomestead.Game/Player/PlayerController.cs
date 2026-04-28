@@ -8,6 +8,7 @@ namespace PixelHomestead.Game.Player;
 public sealed class PlayerController
 {
     private const float MaximumSpeed = 72f;
+    private const float SprintSpeed = 104f;
     private const float Acceleration = 560f;
     private const float Deceleration = 720f;
     private const float InteractionDistance = 18f;
@@ -24,25 +25,24 @@ public sealed class PlayerController
 
     public Vector2 Center => Position + new Vector2(8f, 9f);
     public Vector2 Feet => Position + new Vector2(8f, 15f);
+    public Rectangle CollisionBox => new((int)Position.X + 3, (int)Position.Y + 10, 10, 5);
 
     public void ResetFromState(PlayerState state)
     {
-        Position = new Vector2(
-            state.TilePosition.X * GameConstants.TileSize,
-            state.TilePosition.Y * GameConstants.TileSize
-        );
+        Position = new Vector2(state.WorldX, state.WorldY);
         Velocity = Vector2.Zero;
         Facing = state.Facing;
         WalkCycle = 0;
         _dustTimer = 0;
     }
 
-    public bool Update(GameWorld world, PlayerState state, Vector2 input, float deltaSeconds)
+    public bool Update(GameWorld world, PlayerState state, Vector2 input, bool sprinting, float deltaSeconds)
     {
+        float maximumSpeed = sprinting ? SprintSpeed : MaximumSpeed;
         if (input.LengthSquared() > 0.001f)
         {
             Facing = DirectionFromInput(input, Facing);
-            Velocity = MoveTowards(Velocity, input * MaximumSpeed, Acceleration * deltaSeconds);
+            Velocity = MoveTowards(Velocity, input * maximumSpeed, Acceleration * deltaSeconds);
         }
         else
         {
@@ -67,6 +67,8 @@ public sealed class PlayerController
         FishingCastTimer = Math.Max(0, FishingCastTimer - deltaSeconds);
 
         state.TilePosition = WorldToTile(Center);
+        state.WorldX = Position.X;
+        state.WorldY = Position.Y;
         state.Facing = Facing;
 
         if (IsMoving && _dustTimer <= 0)
@@ -91,6 +93,27 @@ public sealed class PlayerController
         };
 
         return WorldToTile(Center + offset);
+    }
+
+    public GridPosition? MouseTarget(Vector2 worldPosition)
+    {
+        if (Vector2.Distance(Center, worldPosition) > InteractionDistance + 8f)
+        {
+            return null;
+        }
+
+        return WorldToTile(worldPosition);
+    }
+
+    public Rectangle InteractionRectangle()
+    {
+        GridPosition target = InteractionTarget();
+        return new Rectangle(
+            target.X * GameConstants.TileSize,
+            target.Y * GameConstants.TileSize,
+            GameConstants.TileSize,
+            GameConstants.TileSize
+        );
     }
 
     public void TriggerToolUse(bool fishing)
@@ -131,9 +154,9 @@ public sealed class PlayerController
     {
         RectangleF feet = new(position.X + 3, position.Y + 10, 10, 5);
         GridPosition topLeft = WorldToTile(new Vector2(feet.Left, feet.Top));
-        GridPosition topRight = WorldToTile(new Vector2(feet.Right, feet.Top));
-        GridPosition bottomLeft = WorldToTile(new Vector2(feet.Left, feet.Bottom));
-        GridPosition bottomRight = WorldToTile(new Vector2(feet.Right, feet.Bottom));
+        GridPosition topRight = WorldToTile(new Vector2(RightExclusive(feet), feet.Top));
+        GridPosition bottomLeft = WorldToTile(new Vector2(feet.Left, BottomExclusive(feet)));
+        GridPosition bottomRight = WorldToTile(new Vector2(RightExclusive(feet), BottomExclusive(feet)));
 
         return !world.BlocksMovement(topLeft)
             && !world.BlocksMovement(topRight)
@@ -174,6 +197,16 @@ public sealed class PlayerController
             Math.Clamp((int)MathF.Floor(worldPosition.X / GameConstants.TileSize), 0, int.MaxValue),
             Math.Clamp((int)MathF.Floor(worldPosition.Y / GameConstants.TileSize), 0, int.MaxValue)
         );
+    }
+
+    private static float RightExclusive(RectangleF rectangle)
+    {
+        return rectangle.Right - 0.01f;
+    }
+
+    private static float BottomExclusive(RectangleF rectangle)
+    {
+        return rectangle.Bottom - 0.01f;
     }
 
     private readonly record struct RectangleF(float X, float Y, float Width, float Height)

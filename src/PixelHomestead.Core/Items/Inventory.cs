@@ -35,6 +35,14 @@ public sealed class Inventory
             throw new InvalidOperationException($"Unknown item id '{itemId}'.");
         }
 
+        int availableCapacity = _slots
+            .Where(slot => slot.IsEmpty || slot.ItemId == itemId)
+            .Sum(slot => slot.IsEmpty ? itemDefinition.MaxStack : Math.Max(0, itemDefinition.MaxStack - slot.Quantity));
+        if (availableCapacity < quantity)
+        {
+            return false;
+        }
+
         int remaining = quantity;
 
         for (int slotIndex = 0; slotIndex < _slots.Count && remaining > 0; slotIndex++)
@@ -103,6 +111,31 @@ public sealed class Inventory
         }
 
         (_slots[fromIndex], _slots[toIndex]) = (_slots[toIndex], _slots[fromIndex]);
+    }
+
+    public void MoveOrMerge(int fromIndex, int toIndex, IReadOnlyDictionary<string, ItemDefinition> itemDefinitions)
+    {
+        if (fromIndex == toIndex)
+        {
+            return;
+        }
+
+        InventorySlot from = _slots[fromIndex];
+        InventorySlot to = _slots[toIndex];
+        if (
+            from.ItemId is not null
+            && from.ItemId == to.ItemId
+            && itemDefinitions.TryGetValue(from.ItemId, out ItemDefinition? itemDefinition)
+            && to.Quantity < itemDefinition.MaxStack
+        )
+        {
+            int moved = Math.Min(from.Quantity, itemDefinition.MaxStack - to.Quantity);
+            _slots[toIndex] = to with { Quantity = to.Quantity + moved };
+            _slots[fromIndex] = from.WithQuantity(from.Quantity - moved);
+            return;
+        }
+
+        Move(fromIndex, toIndex);
     }
 
     public void Clear()

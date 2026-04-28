@@ -38,5 +38,29 @@
     "energyCost": 3,
     "useDurationSeconds": 0.35,
     "feedbackCue": "fish_cast"
+  },
+  {
+    "id": "scythe",
+    "itemId": "scythe",
+    "displayName": "Scythe",
+    "energyCost": 2,
+    "useDurationSeconds": 0.2,
+    "feedbackCue": "tool_scythe"
+  },
+  {
+    "id": "hammer",
+    "itemId": "hammer",
+    "displayName": "Hammer",
+    "energyCost": 2,
+    "useDurationSeconds": 0.2,
+    "feedbackCue": "tool_hammer"
+  },
+  {
+    "id": "shovel",
+    "itemId": "shovel",
+    "displayName": "Shovel",
+    "energyCost": 2,
+    "useDurationSeconds": 0.2,
+    "feedbackCue": "tool_shovel"
   }
 ]

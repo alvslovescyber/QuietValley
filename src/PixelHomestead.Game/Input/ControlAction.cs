@@ -6,6 +6,7 @@ public enum ControlAction
     MoveDown,
     MoveLeft,
     MoveRight,
+    Sprint,
     Interact,
     ToolUse,
     Cancel,

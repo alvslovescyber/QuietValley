@@ -33,10 +33,12 @@ dotnet csharpier check .
 ## Controls
 
 - `WASD` / arrow keys: move
+- `Shift`: sprint
 - `E` / left click: interact or use selected item
 - `Tab` / `I`: inventory
 - `Esc`: pause or close menu
 - `1-9`: select hotbar slot
+- `F3`: toggle collision debug overlay
 
 ## Current Foundation
 
@@ -49,6 +51,7 @@ dotnet csharpier check .
 - Inventory stacking, tools, farming, fishing placeholder, day/time, energy, economy, sleep, and JSON save/load
 - Deterministic generated pixel atlases in `src/PixelHomestead.Game/Assets/Generated`
 - Continuous player movement with acceleration, deceleration, walk animation, smoother collision, dust particles, tool feedback, and sleep fade
+- Mouse-selectable hotbar, inventory click/drag swapping, toast notifications, dialogue UI foundation, collision debug overlay, settings persistence, and fishing wait/bite/catch foundation
 
 ## Architecture
 

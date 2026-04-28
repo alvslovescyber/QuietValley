@@ -41,15 +41,28 @@ public sealed class SaveManager
             return new GameState(content);
         }
 
-        string json = File.ReadAllText(SavePath);
-        SaveData saveData = JsonSerializer.Deserialize<SaveData>(json, SerializerOptions) ?? new SaveData();
-        return saveData.ToState(content);
+        try
+        {
+            string json = File.ReadAllText(SavePath);
+            SaveData saveData = JsonSerializer.Deserialize<SaveData>(json, SerializerOptions) ?? new SaveData();
+            return saveData.ToState(content);
+        }
+        catch (JsonException)
+        {
+            return new GameState(content);
+        }
+        catch (IOException)
+        {
+            return new GameState(content);
+        }
     }
 
     private sealed record SaveData
     {
         public int PlayerX { get; init; } = 14;
         public int PlayerY { get; init; } = 18;
+        public float PlayerWorldX { get; init; } = 14 * 16;
+        public float PlayerWorldY { get; init; } = 18 * 16;
         public Direction Facing { get; init; } = Direction.Down;
         public int SelectedHotbarIndex { get; init; }
         public int Day { get; init; } = 1;
@@ -58,6 +71,7 @@ public sealed class SaveManager
         public int Energy { get; init; } = EnergySystem.MaximumEnergy;
         public int Coins { get; init; } = 250;
         public List<SaveInventorySlot> Inventory { get; init; } = [];
+        public List<SaveInventorySlot> ShippingBin { get; init; } = [];
         public List<SaveTile> TileOverrides { get; init; } = [];
         public List<SaveCrop> Crops { get; init; } = [];
 
@@ -67,6 +81,8 @@ public sealed class SaveManager
             {
                 PlayerX = state.Player.TilePosition.X,
                 PlayerY = state.Player.TilePosition.Y,
+                PlayerWorldX = state.Player.WorldX,
+                PlayerWorldY = state.Player.WorldY,
                 Facing = state.Player.Facing,
                 SelectedHotbarIndex = state.Player.SelectedHotbarIndex,
                 Day = state.Time.Day,
@@ -86,9 +102,20 @@ public sealed class SaveManager
                     )
                     .Where(slot => !string.IsNullOrWhiteSpace(slot.ItemId) && slot.Quantity > 0)
                     .ToList(),
+                ShippingBin = state
+                    .Economy.ShippingBin.Select(
+                        (slot, index) =>
+                            new SaveInventorySlot
+                            {
+                                Index = index,
+                                ItemId = slot.ItemId,
+                                Quantity = slot.Quantity,
+                            }
+                    )
+                    .Where(slot => !string.IsNullOrWhiteSpace(slot.ItemId) && slot.Quantity > 0)
+                    .ToList(),
                 TileOverrides = state
                     .World.Tiles()
-                    .Where(entry => entry.Tile.Type != TileType.Grass)
                     .Select(entry => new SaveTile
                     {
                         X = entry.Position.X,
@@ -113,6 +140,8 @@ public sealed class SaveManager
         {
             GameState state = new(content);
             state.Player.TilePosition = new GridPosition(PlayerX, PlayerY);
+            state.Player.WorldX = PlayerWorldX;
+            state.Player.WorldY = PlayerWorldY;
             state.Player.Facing = Facing;
             state.Player.SelectedHotbarIndex = Math.Clamp(SelectedHotbarIndex, 0, 8);
             state.Time.SetState(Day, Season, MinutesSinceMidnight);
@@ -127,6 +156,10 @@ public sealed class SaveManager
                     state.Inventory[slot.Index] = new InventorySlot { ItemId = slot.ItemId, Quantity = slot.Quantity };
                 }
             }
+
+            state.Economy.RestoreShippingBin(
+                ShippingBin.Select(slot => new InventorySlot { ItemId = slot.ItemId, Quantity = slot.Quantity })
+            );
 
             foreach (SaveTile tile in TileOverrides)
             {

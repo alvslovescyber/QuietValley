@@ -223,9 +223,12 @@ def make_player() -> None:
 
 
 def make_icons() -> None:
-    atlas = img((256, 64))
+    atlas = img((320, 64))
     d = ImageDraw.Draw(atlas)
     for index in range(16):
+        x = index * 16
+        rect(d, (x + 1, 1, x + 14, 14), "#fff1be")
+    for index in range(16, 20):
         x = index * 16
         rect(d, (x + 1, 1, x + 14, 14), "#fff1be")
     # hoe
@@ -267,6 +270,17 @@ def make_icons() -> None:
         rect(d, (x + 2, 7, x + 11, 11), color)
         rect(d, (x + 10, 5, x + 14, 13), "#287ab5")
         px(d, x + 4, 8, "#37231b")
+    # scythe, hammer, shovel
+    x = 16 * 16
+    rect(d, (x + 7, 3, x + 8, 14), "#d5903b")
+    rect(d, (x + 4, 2, x + 12, 3), "#a6aba0")
+    rect(d, (x + 11, 3, x + 13, 5), "#a6aba0")
+    x = 17 * 16
+    rect(d, (x + 7, 4, x + 8, 14), "#d5903b")
+    rect(d, (x + 4, 2, x + 12, 6), "#909790")
+    x = 18 * 16
+    rect(d, (x + 7, 3, x + 8, 14), "#d5903b")
+    rect(d, (x + 5, 2, x + 10, 5), "#909790")
     atlas.save(OUT / "icons.png")
 
 

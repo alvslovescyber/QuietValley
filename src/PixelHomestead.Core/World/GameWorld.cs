@@ -113,11 +113,14 @@ public sealed class GameWorld
             }
         }
 
-        for (int tileY = 7; tileY <= 13; tileY++)
+        for (int tileY = 10; tileY <= 12; tileY++)
         {
             for (int tileX = 5; tileX <= 14; tileX++)
             {
-                world.SetTile(new GridPosition(tileX, tileY), TileType.House);
+                if (tileY != 12 || tileX is < 9 or > 10)
+                {
+                    world.SetTile(new GridPosition(tileX, tileY), TileType.House);
+                }
             }
         }
 

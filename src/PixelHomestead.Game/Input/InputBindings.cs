@@ -11,6 +11,7 @@ public sealed class InputBindings
         [ControlAction.MoveDown] = [Keys.S, Keys.Down],
         [ControlAction.MoveLeft] = [Keys.A, Keys.Left],
         [ControlAction.MoveRight] = [Keys.D, Keys.Right],
+        [ControlAction.Sprint] = [Keys.LeftShift, Keys.RightShift],
         [ControlAction.Interact] = [Keys.E],
         [ControlAction.Inventory] = [Keys.Tab, Keys.I],
         [ControlAction.Pause] = [Keys.Escape],
@@ -52,6 +53,11 @@ public sealed class InputBindings
     public bool ToolUsePressed(InputState input)
     {
         return input.LeftClick();
+    }
+
+    public bool SprintDown(InputState input)
+    {
+        return Down(input, ControlAction.Sprint);
     }
 
     public bool CancelPressed(InputState input)

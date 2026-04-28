@@ -10,10 +10,16 @@ public sealed class EconomySystem
     public int Coins { get; private set; } = 250;
     public IReadOnlyList<InventorySlot> ShippingBin => _shippingBin;
 
-    public bool ShipFromInventory(Inventory inventory, int inventorySlotIndex)
+    public bool ShipFromInventory(Inventory inventory, int inventorySlotIndex, ContentDatabase content)
     {
         InventorySlot slot = inventory[inventorySlotIndex];
-        if (slot.IsEmpty || slot.ItemId is null)
+        if (
+            slot.IsEmpty
+            || slot.ItemId is null
+            || !content.Items.TryGetValue(slot.ItemId, out ItemDefinition? item)
+            || item.Type == ItemType.Tool
+            || item.SellPrice <= 0
+        )
         {
             return false;
         }
@@ -44,5 +50,17 @@ public sealed class EconomySystem
     public void SetCoins(int coins)
     {
         Coins = Math.Max(0, coins);
+    }
+
+    public void RestoreShippingBin(IEnumerable<InventorySlot> shippedItems)
+    {
+        _shippingBin.Clear();
+        foreach (InventorySlot slot in shippedItems)
+        {
+            if (!slot.IsEmpty && slot.ItemId is not null && slot.Quantity > 0)
+            {
+                _shippingBin.Add(slot);
+            }
+        }
     }
 }

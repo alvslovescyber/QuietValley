@@ -28,6 +28,27 @@ public sealed class FishingSystem
             return null;
         }
 
+        return CatchFish(inventory, content);
+    }
+
+    public string? TryCatchFishAtWater(
+        GameWorld world,
+        GridPosition waterPosition,
+        Inventory inventory,
+        ContentDatabase content,
+        EnergySystem energy
+    )
+    {
+        if (!world.GetTile(waterPosition).IsWater || !energy.Spend(3))
+        {
+            return null;
+        }
+
+        return CatchFish(inventory, content);
+    }
+
+    private string CatchFish(Inventory inventory, ContentDatabase content)
+    {
         string fishId = SelectFish(content);
         inventory.Add(fishId, 1, content.Items);
         return fishId;

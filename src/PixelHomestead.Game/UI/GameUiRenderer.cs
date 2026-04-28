@@ -25,7 +25,7 @@ public sealed class GameUiRenderer(Texture2D pixel, PixelFont font, ArtAssets ar
         DrawButton(spriteBatch, new Rectangle(252, 276, 136, 26), "Quit", mouse);
     }
 
-    public void DrawHud(SpriteBatch spriteBatch, GameState state)
+    public void DrawHud(SpriteBatch spriteBatch, GameState state, Point mouse)
     {
         DrawPanel(spriteBatch, new Rectangle(10, 8, 156, 34), PanelStyle.Compact);
         DrawLeafBadge(spriteBatch, new Rectangle(18, 16, 14, 14));
@@ -49,28 +49,32 @@ public sealed class GameUiRenderer(Texture2D pixel, PixelFont font, ArtAssets ar
         DrawCoin(spriteBatch, 500, 31);
         font.Draw(spriteBatch, $"{state.Time.ClockText} {state.Economy.Coins}G", new Vector2(516, 31), Palette.Text, 1);
 
-        DrawHotbar(spriteBatch, state);
+        DrawHotbar(spriteBatch, state, mouse);
 
-        DrawPanel(spriteBatch, new Rectangle(12, 320, 244, 26), PanelStyle.Compact);
-        DrawTinyFlower(spriteBatch, 23, 329);
-        font.Draw(spriteBatch, state.StatusMessage, new Vector2(42, 329), Palette.Text, 1);
+        InventorySlot selected = state.Inventory[state.Player.SelectedHotbarIndex];
+        string selectedText = selected.ItemId is null
+            ? "Empty hands"
+            : state.Content.Items[selected.ItemId].DisplayName;
+        DrawPanel(spriteBatch, new Rectangle(12, 320, 156, 24), PanelStyle.Compact);
+        font.Draw(spriteBatch, selectedText, new Vector2(24, 329), Palette.Text, 1);
     }
 
-    public void DrawHotbar(SpriteBatch spriteBatch, GameState state)
+    public void DrawHotbar(SpriteBatch spriteBatch, GameState state, Point mouse)
     {
-        int startX = GameConstants.VirtualWidth / 2 - GameConstants.HotbarSlots * 23 / 2;
-        int y = 315;
+        int startX = HotbarStartX();
+        int y = HotbarY;
         DrawPanel(
             spriteBatch,
-            new Rectangle(startX - 7, y - 7, GameConstants.HotbarSlots * 23 + 12, 36),
+            new Rectangle(startX - 7, y - 7, GameConstants.HotbarSlots * HotbarStride + 12, 36),
             PanelStyle.Compact
         );
 
         for (int slotIndex = 0; slotIndex < GameConstants.HotbarSlots; slotIndex++)
         {
-            Rectangle slotRectangle = new(startX + slotIndex * 23, y, 21, 21);
+            Rectangle slotRectangle = HotbarSlotRectangle(slotIndex);
             bool selected = slotIndex == state.Player.SelectedHotbarIndex;
-            DrawSlot(spriteBatch, slotRectangle, selected);
+            bool hovered = slotRectangle.Contains(mouse);
+            DrawSlot(spriteBatch, slotRectangle, selected, hovered);
 
             InventorySlot slot = state.Inventory[slotIndex];
             if (slot.IsEmpty || slot.ItemId is null)
@@ -91,9 +95,20 @@ public sealed class GameUiRenderer(Texture2D pixel, PixelFont font, ArtAssets ar
                 );
             }
         }
+
+        int? hoveredSlot = HotbarSlotAt(mouse);
+        if (hoveredSlot is not null)
+        {
+            InventorySlot slot = state.Inventory[hoveredSlot.Value];
+            if (!slot.IsEmpty && slot.ItemId is not null)
+            {
+                ItemDefinition item = state.Content.Items[slot.ItemId];
+                DrawTooltip(spriteBatch, mouse, item.DisplayName, item.Description);
+            }
+        }
     }
 
-    public void DrawInventory(SpriteBatch spriteBatch, GameState state)
+    public void DrawInventory(SpriteBatch spriteBatch, GameState state, Point mouse, int? draggedSlotIndex)
     {
         DrawOverlay(spriteBatch);
         Rectangle panel = new(122, 58, 396, 238);
@@ -105,10 +120,13 @@ public sealed class GameUiRenderer(Texture2D pixel, PixelFont font, ArtAssets ar
 
         for (int slotIndex = 0; slotIndex < state.Inventory.Capacity; slotIndex++)
         {
-            int column = slotIndex % 9;
-            int row = slotIndex / 9;
-            Rectangle slotRectangle = new(146 + column * 27, 112 + row * 27, 23, 23);
-            DrawSlot(spriteBatch, slotRectangle, slotIndex == state.Player.SelectedHotbarIndex);
+            Rectangle slotRectangle = InventorySlotRectangle(slotIndex);
+            DrawSlot(
+                spriteBatch,
+                slotRectangle,
+                slotIndex == state.Player.SelectedHotbarIndex,
+                slotRectangle.Contains(mouse)
+            );
 
             InventorySlot slot = state.Inventory[slotIndex];
             if (slot.IsEmpty || slot.ItemId is null)
@@ -138,7 +156,23 @@ public sealed class GameUiRenderer(Texture2D pixel, PixelFont font, ArtAssets ar
             font.Draw(spriteBatch, item.Description, new Vector2(146, 252), Palette.Text, 1);
         }
 
-        font.Draw(spriteBatch, "Tab/Esc closes. 1-9 selects hotbar.", new Vector2(146, 278), Palette.Text, 1);
+        font.Draw(spriteBatch, "Tab/Esc closes. Click or drag items.", new Vector2(146, 278), Palette.Text, 1);
+
+        int? hovered = InventorySlotAt(mouse);
+        if (hovered is not null)
+        {
+            InventorySlot slot = state.Inventory[hovered.Value];
+            if (!slot.IsEmpty && slot.ItemId is not null)
+            {
+                ItemDefinition item = state.Content.Items[slot.ItemId];
+                DrawTooltip(spriteBatch, mouse, item.DisplayName, $"{item.Type}  Sell {item.SellPrice}G");
+            }
+        }
+
+        if (draggedSlotIndex is not null)
+        {
+            font.Draw(spriteBatch, "Dragging", new Vector2(mouse.X + 12, mouse.Y + 12), Palette.TextLight, 1);
+        }
     }
 
     public void DrawPause(SpriteBatch spriteBatch, Point mouse)
@@ -153,17 +187,36 @@ public sealed class GameUiRenderer(Texture2D pixel, PixelFont font, ArtAssets ar
         DrawButton(spriteBatch, new Rectangle(252, 255, 136, 25), "Quit", mouse);
     }
 
-    public void DrawSettings(SpriteBatch spriteBatch, Point mouse, int scale)
+    public void DrawSettings(SpriteBatch spriteBatch, Point mouse, GameSettings settings)
     {
         DrawOverlay(spriteBatch);
         DrawPanel(spriteBatch, new Rectangle(188, 92, 264, 204), PanelStyle.Parchment);
         font.Draw(spriteBatch, "Settings", new Vector2(272, 112), Palette.Text, 2);
-        font.Draw(spriteBatch, "Pixel scale", new Vector2(226, 142), Palette.Text, 1);
-        DrawButton(spriteBatch, new Rectangle(226, 160, 54, 24), "2x", mouse);
-        DrawButton(spriteBatch, new Rectangle(294, 160, 54, 24), "3x", mouse);
-        DrawButton(spriteBatch, new Rectangle(362, 160, 54, 24), "4x", mouse);
-        font.Draw(spriteBatch, $"Current {scale}x", new Vector2(226, 198), Palette.Text, 1);
-        font.Draw(spriteBatch, "Audio and keymap hooks are ready.", new Vector2(226, 222), Palette.Text, 1);
+        font.Draw(spriteBatch, $"Music {settings.MusicVolume:0.0}", new Vector2(226, 142), Palette.Text, 1);
+        DrawButton(spriteBatch, new Rectangle(344, 136, 26, 22), "-", mouse);
+        DrawButton(spriteBatch, new Rectangle(380, 136, 26, 22), "+", mouse);
+        font.Draw(spriteBatch, $"SFX {settings.SfxVolume:0.0}", new Vector2(226, 166), Palette.Text, 1);
+        DrawButton(spriteBatch, new Rectangle(344, 160, 26, 22), "-", mouse);
+        DrawButton(spriteBatch, new Rectangle(380, 160, 26, 22), "+", mouse);
+        font.Draw(spriteBatch, $"Scale {settings.WindowScale}x", new Vector2(226, 190), Palette.Text, 1);
+        DrawButton(spriteBatch, new Rectangle(344, 184, 26, 22), "-", mouse);
+        DrawButton(spriteBatch, new Rectangle(380, 184, 26, 22), "+", mouse);
+        font.Draw(
+            spriteBatch,
+            settings.Fullscreen ? "Fullscreen On" : "Fullscreen Off",
+            new Vector2(226, 214),
+            Palette.Text,
+            1
+        );
+        DrawButton(spriteBatch, new Rectangle(344, 208, 62, 22), "Toggle", mouse);
+        font.Draw(
+            spriteBatch,
+            settings.ShowCollisionDebug ? "Debug On" : "Debug Off",
+            new Vector2(226, 238),
+            Palette.Text,
+            1
+        );
+        DrawButton(spriteBatch, new Rectangle(344, 232, 62, 22), "Toggle", mouse);
         DrawButton(spriteBatch, new Rectangle(252, 260, 136, 25), "Back", mouse);
     }
 
@@ -184,6 +237,42 @@ public sealed class GameUiRenderer(Texture2D pixel, PixelFont font, ArtAssets ar
         int width = Math.Max(92, font.MeasureWidth(prompt, 1) + 16);
         DrawPanel(spriteBatch, new Rectangle((int)position.X, (int)position.Y, width, 18), PanelStyle.Compact);
         font.Draw(spriteBatch, prompt, position + new Vector2(8, 6), Palette.Text, 1);
+    }
+
+    public void DrawToast(SpriteBatch spriteBatch, string text, string iconKey, Vector2 position, float alpha)
+    {
+        int width = Math.Clamp(font.MeasureWidth(text, 1) + 34, 96, 260);
+        Rectangle rectangle = new((int)position.X, (int)position.Y, width, 22);
+        spriteBatch.Draw(
+            pixel,
+            new Rectangle(rectangle.X + 2, rectangle.Y + 3, rectangle.Width, rectangle.Height),
+            Palette.PanelShadow * alpha
+        );
+        spriteBatch.Draw(pixel, rectangle, Palette.WoodDark * alpha);
+        spriteBatch.Draw(
+            pixel,
+            new Rectangle(rectangle.X + 2, rectangle.Y + 2, rectangle.Width - 4, rectangle.Height - 4),
+            Palette.Parchment * alpha
+        );
+        DrawToastIcon(spriteBatch, rectangle.X + 8, rectangle.Y + 7, iconKey, alpha);
+        font.Draw(spriteBatch, text, new Vector2(rectangle.X + 24, rectangle.Y + 8), Palette.Text * alpha, 1);
+    }
+
+    public void DrawDialogue(SpriteBatch spriteBatch, DialogueState dialogue)
+    {
+        if (!dialogue.IsOpen)
+        {
+            return;
+        }
+
+        Rectangle panel = new(42, 252, 556, 92);
+        DrawPanel(spriteBatch, panel, PanelStyle.Parchment);
+        spriteBatch.Draw(pixel, new Rectangle(62, 270, 48, 48), Palette.WoodDark);
+        spriteBatch.Draw(pixel, new Rectangle(66, 274, 40, 40), Palette.ParchmentLight);
+        DrawTinyFlower(spriteBatch, 82, 288);
+        font.Draw(spriteBatch, dialogue.SpeakerName, new Vector2(126, 270), Palette.Text, 1);
+        font.Draw(spriteBatch, dialogue.Text, new Vector2(126, 292), Palette.Text, 1);
+        font.Draw(spriteBatch, "E / Click", new Vector2(520, 322), Palette.Text, 1);
     }
 
     public void DrawFade(SpriteBatch spriteBatch, float alpha)
@@ -269,6 +358,32 @@ public sealed class GameUiRenderer(Texture2D pixel, PixelFont font, ArtAssets ar
         );
     }
 
+    public int? HotbarSlotAt(Point mouse)
+    {
+        for (int slotIndex = 0; slotIndex < GameConstants.HotbarSlots; slotIndex++)
+        {
+            if (HotbarSlotRectangle(slotIndex).Contains(mouse))
+            {
+                return slotIndex;
+            }
+        }
+
+        return null;
+    }
+
+    public static int? InventorySlotAt(Point mouse)
+    {
+        for (int slotIndex = 0; slotIndex < 36; slotIndex++)
+        {
+            if (InventorySlotRectangle(slotIndex).Contains(mouse))
+            {
+                return slotIndex;
+            }
+        }
+
+        return null;
+    }
+
     private void DrawTitleScene(SpriteBatch spriteBatch)
     {
         for (int y = 0; y < GameConstants.VirtualHeight; y += 16)
@@ -316,13 +431,19 @@ public sealed class GameUiRenderer(Texture2D pixel, PixelFont font, ArtAssets ar
         spriteBatch.Draw(art.Props, new Rectangle(229, 158, 24, 18), ArtAssets.FenceSource, Color.White);
     }
 
-    private void DrawSlot(SpriteBatch spriteBatch, Rectangle rectangle, bool selected)
+    private void DrawSlot(SpriteBatch spriteBatch, Rectangle rectangle, bool selected, bool hovered)
     {
-        spriteBatch.Draw(pixel, rectangle, selected ? Palette.Highlight : Palette.WoodDark);
+        spriteBatch.Draw(
+            pixel,
+            rectangle,
+            selected ? Palette.Highlight
+                : hovered ? Palette.ParchmentLight
+                : Palette.WoodDark
+        );
         spriteBatch.Draw(
             pixel,
             new Rectangle(rectangle.X + 2, rectangle.Y + 2, rectangle.Width - 4, rectangle.Height - 4),
-            selected ? Palette.ParchmentLight : Palette.Parchment
+            selected || hovered ? Palette.ParchmentLight : Palette.Parchment
         );
         spriteBatch.Draw(
             pixel,
@@ -334,6 +455,33 @@ public sealed class GameUiRenderer(Texture2D pixel, PixelFont font, ArtAssets ar
     private void DrawItemIcon(SpriteBatch spriteBatch, ItemDefinition item, Rectangle rectangle)
     {
         spriteBatch.Draw(art.Icons, rectangle, ArtAssets.IconSource(item), Color.White);
+    }
+
+    private void DrawTooltip(SpriteBatch spriteBatch, Point mouse, string title, string description)
+    {
+        int width = Math.Max(font.MeasureWidth(title, 1), font.MeasureWidth(description, 1)) + 18;
+        Rectangle rectangle = new(
+            Math.Min(mouse.X + 12, GameConstants.VirtualWidth - width - 6),
+            Math.Max(8, mouse.Y - 42),
+            width,
+            38
+        );
+        DrawPanel(spriteBatch, rectangle, PanelStyle.Compact);
+        font.Draw(spriteBatch, title, new Vector2(rectangle.X + 9, rectangle.Y + 9), Palette.Text, 1);
+        font.Draw(spriteBatch, description, new Vector2(rectangle.X + 9, rectangle.Y + 23), Palette.Text, 1);
+    }
+
+    private void DrawToastIcon(SpriteBatch spriteBatch, int x, int y, string iconKey, float alpha)
+    {
+        Color color = iconKey switch
+        {
+            "warn" => new Color(230, 73, 67),
+            "item" => Palette.Highlight,
+            "fish" => Palette.WaterLight,
+            _ => Palette.GrassDark,
+        };
+        spriteBatch.Draw(pixel, new Rectangle(x, y, 8, 8), color * alpha);
+        spriteBatch.Draw(pixel, new Rectangle(x + 2, y + 2, 4, 2), Palette.ParchmentLight * alpha);
     }
 
     private void DrawOverlay(SpriteBatch spriteBatch)
@@ -403,6 +551,26 @@ public sealed class GameUiRenderer(Texture2D pixel, PixelFont font, ArtAssets ar
         spriteBatch.Draw(pixel, new Rectangle(x + 10, y, 1, 1), Palette.FlowerWhite);
         spriteBatch.Draw(pixel, new Rectangle(x + 9, y + 1, 1, 1), Palette.Highlight);
     }
+
+    private static int HotbarStartX()
+    {
+        return GameConstants.VirtualWidth / 2 - GameConstants.HotbarSlots * HotbarStride / 2;
+    }
+
+    private static Rectangle HotbarSlotRectangle(int slotIndex)
+    {
+        return new Rectangle(HotbarStartX() + slotIndex * HotbarStride, HotbarY, 21, 21);
+    }
+
+    private static Rectangle InventorySlotRectangle(int slotIndex)
+    {
+        int column = slotIndex % 9;
+        int row = slotIndex / 9;
+        return new Rectangle(146 + column * 27, 112 + row * 27, 23, 23);
+    }
+
+    private const int HotbarY = 315;
+    private const int HotbarStride = 23;
 }
 
 public enum PanelStyle

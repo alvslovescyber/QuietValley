@@ -38,7 +38,7 @@ public sealed class ArtAssets : IDisposable
             _ => Math.Abs(variant) % 4,
         };
 
-        return Cell(index);
+        return IconCell(index);
     }
 
     public static Rectangle IconSource(ItemDefinition item)
@@ -61,6 +61,9 @@ public sealed class ArtAssets : IDisposable
                 "tomato" => 11,
                 "potato" => 12,
                 "golden_fish" => 15,
+                "scythe" => 16,
+                "hammer" => 17,
+                "shovel" => 18,
                 "pond_carp" => 14,
                 _ => item.Type == ItemType.Fish ? 13 : 0,
             },
@@ -94,6 +97,11 @@ public sealed class ArtAssets : IDisposable
     private static Rectangle Cell(int index)
     {
         return new Rectangle(index % 8 * 16, index / 8 * 16, 16, 16);
+    }
+
+    private static Rectangle IconCell(int index)
+    {
+        return new Rectangle(index * 16, 0, 16, 16);
     }
 
     private static Texture2D LoadTexture(GraphicsDevice graphicsDevice, string path)

@@ -59,6 +59,84 @@ public sealed class WorldRenderer(ArtAssets art, Texture2D pixel)
         }
     }
 
+    public void DrawTargetHighlight(SpriteBatch spriteBatch, GridPosition target, Vector2 camera)
+    {
+        Rectangle rectangle = TileScreenRectangle(target, camera);
+        spriteBatch.Draw(
+            pixel,
+            new Rectangle(rectangle.X, rectangle.Y, rectangle.Width, 1),
+            new Color(255, 224, 88, 160)
+        );
+        spriteBatch.Draw(
+            pixel,
+            new Rectangle(rectangle.X, rectangle.Bottom - 1, rectangle.Width, 1),
+            new Color(255, 224, 88, 160)
+        );
+        spriteBatch.Draw(
+            pixel,
+            new Rectangle(rectangle.X, rectangle.Y, 1, rectangle.Height),
+            new Color(255, 224, 88, 160)
+        );
+        spriteBatch.Draw(
+            pixel,
+            new Rectangle(rectangle.Right - 1, rectangle.Y, 1, rectangle.Height),
+            new Color(255, 224, 88, 160)
+        );
+    }
+
+    public void DrawFishingBobber(SpriteBatch spriteBatch, GridPosition target, Vector2 camera, bool biting)
+    {
+        Rectangle rectangle = TileScreenRectangle(target, camera);
+        Color color = biting ? new Color(255, 224, 88) : new Color(255, 245, 230);
+        spriteBatch.Draw(pixel, new Rectangle(rectangle.X + 6, rectangle.Y + 6, 5, 5), color);
+        spriteBatch.Draw(pixel, new Rectangle(rectangle.X + 6, rectangle.Y + 9, 5, 2), new Color(213, 64, 64));
+    }
+
+    public void DrawCollisionDebug(
+        SpriteBatch spriteBatch,
+        GameWorld world,
+        Vector2 camera,
+        Rectangle playerHitbox,
+        Rectangle interactionRectangle
+    )
+    {
+        foreach ((GridPosition position, Tile tile) in world.Tiles())
+        {
+            if (!tile.BlocksMovement)
+            {
+                continue;
+            }
+
+            Rectangle rectangle = TileScreenRectangle(position, camera);
+            spriteBatch.Draw(pixel, rectangle, new Color(255, 0, 0, 45));
+            DrawRectangleOutline(spriteBatch, rectangle, new Color(255, 64, 64, 180));
+        }
+
+        Rectangle player = new(
+            playerHitbox.X - (int)camera.X,
+            playerHitbox.Y - (int)camera.Y,
+            playerHitbox.Width,
+            playerHitbox.Height
+        );
+        DrawRectangleOutline(spriteBatch, player, new Color(64, 255, 64, 220));
+
+        Rectangle interaction = new(
+            interactionRectangle.X - (int)camera.X,
+            interactionRectangle.Y - (int)camera.Y,
+            interactionRectangle.Width,
+            interactionRectangle.Height
+        );
+        DrawRectangleOutline(spriteBatch, interaction, new Color(255, 224, 88, 220));
+    }
+
+    private void DrawRectangleOutline(SpriteBatch spriteBatch, Rectangle rectangle, Color color)
+    {
+        spriteBatch.Draw(pixel, new Rectangle(rectangle.X, rectangle.Y, rectangle.Width, 1), color);
+        spriteBatch.Draw(pixel, new Rectangle(rectangle.X, rectangle.Bottom - 1, rectangle.Width, 1), color);
+        spriteBatch.Draw(pixel, new Rectangle(rectangle.X, rectangle.Y, 1, rectangle.Height), color);
+        spriteBatch.Draw(pixel, new Rectangle(rectangle.Right - 1, rectangle.Y, 1, rectangle.Height), color);
+    }
+
     private void DrawBaseTile(
         SpriteBatch spriteBatch,
         GameWorld world,
