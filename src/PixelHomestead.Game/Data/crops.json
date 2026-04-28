@@ -1,0 +1,38 @@
+[
+  {
+    "id": "turnip",
+    "displayName": "Turnip",
+    "seedItemId": "turnip_seed",
+    "harvestItemId": "turnip",
+    "growthDays": 2,
+    "requiresWater": true,
+    "sellValue": 20
+  },
+  {
+    "id": "carrot",
+    "displayName": "Carrot",
+    "seedItemId": "carrot_seed",
+    "harvestItemId": "carrot",
+    "growthDays": 3,
+    "requiresWater": true,
+    "sellValue": 28
+  },
+  {
+    "id": "tomato",
+    "displayName": "Tomato",
+    "seedItemId": "tomato_seed",
+    "harvestItemId": "tomato",
+    "growthDays": 4,
+    "requiresWater": true,
+    "sellValue": 35
+  },
+  {
+    "id": "potato",
+    "displayName": "Potato",
+    "seedItemId": "potato_seed",
+    "harvestItemId": "potato",
+    "growthDays": 3,
+    "requiresWater": true,
+    "sellValue": 25
+  }
+]

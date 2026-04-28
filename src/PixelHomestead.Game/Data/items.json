@@ -1,0 +1,172 @@
+[
+  {
+    "id": "hoe",
+    "displayName": "Hoe",
+    "description": "Tills dirt and grass into plantable soil.",
+    "type": "Tool",
+    "toolKind": "Hoe",
+    "iconKey": "tool_hoe",
+    "maxStack": 1,
+    "sellPrice": 0
+  },
+  {
+    "id": "watering_can",
+    "displayName": "Watering Can",
+    "description": "Waters planted crops so they grow overnight.",
+    "type": "Tool",
+    "toolKind": "WateringCan",
+    "iconKey": "tool_water",
+    "maxStack": 1,
+    "sellPrice": 0
+  },
+  {
+    "id": "axe",
+    "displayName": "Axe",
+    "description": "Clears small bushes in this foundation build.",
+    "type": "Tool",
+    "toolKind": "Axe",
+    "iconKey": "tool_axe",
+    "maxStack": 1,
+    "sellPrice": 0
+  },
+  {
+    "id": "pickaxe",
+    "displayName": "Pickaxe",
+    "description": "Prepared for future rock and ore interactions.",
+    "type": "Tool",
+    "toolKind": "Pickaxe",
+    "iconKey": "tool_pickaxe",
+    "maxStack": 1,
+    "sellPrice": 0
+  },
+  {
+    "id": "fishing_rod",
+    "displayName": "Fishing Rod",
+    "description": "Catches fish when used near water.",
+    "type": "Tool",
+    "toolKind": "FishingRod",
+    "iconKey": "tool_rod",
+    "maxStack": 1,
+    "sellPrice": 0
+  },
+  {
+    "id": "turnip_seed",
+    "displayName": "Turnip Seed",
+    "description": "A hardy spring seed. Grows quickly.",
+    "type": "Seed",
+    "toolKind": "None",
+    "iconKey": "seed_turnip",
+    "maxStack": 99,
+    "sellPrice": 2
+  },
+  {
+    "id": "carrot_seed",
+    "displayName": "Carrot Seed",
+    "description": "A crisp root crop seed.",
+    "type": "Seed",
+    "toolKind": "None",
+    "iconKey": "seed_carrot",
+    "maxStack": 99,
+    "sellPrice": 2
+  },
+  {
+    "id": "tomato_seed",
+    "displayName": "Tomato Seed",
+    "description": "A warm-season crop seed.",
+    "type": "Seed",
+    "toolKind": "None",
+    "iconKey": "seed_tomato",
+    "maxStack": 99,
+    "sellPrice": 3
+  },
+  {
+    "id": "potato_seed",
+    "displayName": "Potato Seed",
+    "description": "A reliable farm staple.",
+    "type": "Seed",
+    "toolKind": "None",
+    "iconKey": "seed_potato",
+    "maxStack": 99,
+    "sellPrice": 3
+  },
+  {
+    "id": "turnip",
+    "displayName": "Turnip",
+    "description": "A fresh white turnip.",
+    "type": "Crop",
+    "toolKind": "None",
+    "iconKey": "crop_turnip",
+    "maxStack": 99,
+    "sellPrice": 20
+  },
+  {
+    "id": "carrot",
+    "displayName": "Carrot",
+    "description": "A bright orange carrot.",
+    "type": "Crop",
+    "toolKind": "None",
+    "iconKey": "crop_carrot",
+    "maxStack": 99,
+    "sellPrice": 28
+  },
+  {
+    "id": "tomato",
+    "displayName": "Tomato",
+    "description": "A juicy red tomato.",
+    "type": "Crop",
+    "toolKind": "None",
+    "iconKey": "crop_tomato",
+    "maxStack": 99,
+    "sellPrice": 35
+  },
+  {
+    "id": "potato",
+    "displayName": "Potato",
+    "description": "A sturdy potato for selling or cooking later.",
+    "type": "Crop",
+    "toolKind": "None",
+    "iconKey": "crop_potato",
+    "maxStack": 99,
+    "sellPrice": 25
+  },
+  {
+    "id": "small_fish",
+    "displayName": "Small Fish",
+    "description": "A tiny pond fish.",
+    "type": "Fish",
+    "toolKind": "None",
+    "iconKey": "fish_small",
+    "maxStack": 99,
+    "sellPrice": 15
+  },
+  {
+    "id": "pond_carp",
+    "displayName": "Pond Carp",
+    "description": "A common calm-water fish.",
+    "type": "Fish",
+    "toolKind": "None",
+    "iconKey": "fish_carp",
+    "maxStack": 99,
+    "sellPrice": 30
+  },
+  {
+    "id": "river_minnow",
+    "displayName": "River Minnow",
+    "description": "Small, quick, and shiny.",
+    "type": "Fish",
+    "toolKind": "None",
+    "iconKey": "fish_minnow",
+    "maxStack": 99,
+    "sellPrice": 22
+  },
+  {
+    "id": "golden_fish",
+    "displayName": "Golden Fish",
+    "description": "Rare enough to feel lucky.",
+    "type": "Fish",
+    "toolKind": "None",
+    "iconKey": "fish_golden",
+    "maxStack": 99,
+    "sellPrice": 120
+  }
+]
