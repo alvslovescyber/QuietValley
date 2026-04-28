@@ -5,6 +5,7 @@ namespace PixelHomestead.Core.World;
 public sealed class GameWorld
 {
     private readonly Tile[,] _tiles;
+    private readonly Dictionary<GridPosition, Tile> _tileOverrides = new();
     private readonly Dictionary<GridPosition, CropState> _crops = new();
 
     public GameWorld(int width, int height)
@@ -29,11 +30,17 @@ public sealed class GameWorld
 
     public int Width { get; }
     public int Height { get; }
+    public bool IsInfinite => true;
     public IReadOnlyDictionary<GridPosition, CropState> Crops => _crops;
 
     public Tile GetTile(GridPosition position)
     {
-        return IsInside(position) ? _tiles[position.X, position.Y] : new Tile { Type = TileType.Tree };
+        if (_tileOverrides.TryGetValue(position, out Tile? overrideTile))
+        {
+            return overrideTile;
+        }
+
+        return IsInside(position) ? _tiles[position.X, position.Y] : GenerateProceduralTile(position);
     }
 
     public void SetTile(GridPosition position, TileType tileType)
@@ -41,7 +48,11 @@ public sealed class GameWorld
         if (IsInside(position))
         {
             _tiles[position.X, position.Y] = new Tile { Type = tileType };
+            _tileOverrides.Remove(position);
+            return;
         }
+
+        _tileOverrides[position] = new Tile { Type = tileType };
     }
 
     public bool IsInside(GridPosition position)
@@ -51,7 +62,7 @@ public sealed class GameWorld
 
     public bool BlocksMovement(GridPosition position)
     {
-        return !IsInside(position) || GetTile(position).BlocksMovement;
+        return GetTile(position).BlocksMovement;
     }
 
     public bool HasCrop(GridPosition position)
@@ -84,6 +95,26 @@ public sealed class GameWorld
                 yield return (position, _tiles[tileX, tileY]);
             }
         }
+
+        foreach ((GridPosition position, Tile tile) in _tileOverrides)
+        {
+            if (!IsInside(position))
+            {
+                yield return (position, tile);
+            }
+        }
+    }
+
+    public IEnumerable<(GridPosition Position, Tile Tile)> TilesIn(int minX, int minY, int maxX, int maxY)
+    {
+        for (int tileY = minY; tileY <= maxY; tileY++)
+        {
+            for (int tileX = minX; tileX <= maxX; tileX++)
+            {
+                GridPosition position = new(tileX, tileY);
+                yield return (position, GetTile(position));
+            }
+        }
     }
 
     public static GameWorld CreateStarterWorld()
@@ -95,7 +126,7 @@ public sealed class GameWorld
             for (int tileX = 0; tileX < world.Width; tileX++)
             {
                 GridPosition position = new(tileX, tileY);
-                bool borderForest = tileX <= 1 || tileY <= 1 || tileX >= world.Width - 2 || tileY >= world.Height - 2;
+                bool borderForest = false;
                 bool upperForestPatch = tileY <= 6 && tileX is > 20 and < 53 && (tileX + tileY) % 3 != 0;
                 bool lowerForestPatch = tileY >= 32 && tileX is > 27 and < 56 && (tileX + tileY) % 4 != 1;
                 if (borderForest || upperForestPatch || lowerForestPatch)
@@ -113,14 +144,11 @@ public sealed class GameWorld
             }
         }
 
-        for (int tileY = 10; tileY <= 12; tileY++)
+        for (int tileY = 5; tileY <= 12; tileY++)
         {
-            for (int tileX = 5; tileX <= 14; tileX++)
+            for (int tileX = 4; tileX <= 11; tileX++)
             {
-                if (tileY != 12 || tileX is < 9 or > 10)
-                {
-                    world.SetTile(new GridPosition(tileX, tileY), TileType.House);
-                }
+                world.SetTile(new GridPosition(tileX, tileY), TileType.House);
             }
         }
 
@@ -138,13 +166,25 @@ public sealed class GameWorld
             }
         }
 
-        for (int tileY = 9; tileY <= 26; tileY++)
+        for (int tileY = 8; tileY <= 26; tileY++)
         {
-            for (int tileX = 31; tileX <= 49; tileX++)
+            for (int tileX = 27; tileX <= 49; tileX++)
             {
-                double normalized = Math.Pow((tileX - 40.2) / 8.2, 2) + Math.Pow((tileY - 17.3) / 7.6, 2);
+                double normalized = Math.Pow((tileX - 38.2) / 9.7, 2) + Math.Pow((tileY - 17.3) / 7.6, 2);
                 double wobble = Math.Sin(tileX * 1.7) * 0.07 + Math.Cos(tileY * 1.3) * 0.08;
                 if (normalized + wobble < 1.0)
+                {
+                    world.SetTile(new GridPosition(tileX, tileY), TileType.Water);
+                }
+            }
+        }
+
+        for (int tileY = 21; tileY <= 28; tileY++)
+        {
+            for (int tileX = 25; tileX <= 32; tileX++)
+            {
+                double normalized = Math.Pow((tileX - 28.5) / 3.8, 2) + Math.Pow((tileY - 24.4) / 3.2, 2);
+                if (normalized < 1.0)
                 {
                     world.SetTile(new GridPosition(tileX, tileY), TileType.Water);
                 }
@@ -321,6 +361,83 @@ public sealed class GameWorld
         world.SetTile(new GridPosition(19, 14), TileType.Barrel);
         world.SetTile(new GridPosition(21, 14), TileType.Barrel);
 
+        FillRectangle(world, 36, 28, 43, 34, TileType.TownHouse);
+        FillRectangle(world, 48, 28, 54, 34, TileType.TownHouse);
+        FillRectangle(world, 34, 35, 56, 36, TileType.Path);
+        world.SetTile(new GridPosition(33, 34), TileType.Well);
+        world.SetTile(new GridPosition(44, 34), TileType.Mailbox);
+        world.SetTile(new GridPosition(45, 36), TileType.Signpost);
+        world.SetTile(new GridPosition(56, 34), TileType.LampPost);
+
         return world;
+    }
+
+    private static void FillRectangle(GameWorld world, int left, int top, int right, int bottom, TileType tileType)
+    {
+        for (int tileY = top; tileY <= bottom; tileY++)
+        {
+            for (int tileX = left; tileX <= right; tileX++)
+            {
+                world.SetTile(new GridPosition(tileX, tileY), tileType);
+            }
+        }
+    }
+
+    private static Tile GenerateProceduralTile(GridPosition position)
+    {
+        int chunkX = FloorDiv(position.X, 16);
+        int chunkY = FloorDiv(position.Y, 16);
+        int localX = Mod(position.X, 16);
+        int localY = Mod(position.Y, 16);
+        uint chunkHash = Hash(chunkX, chunkY);
+        int pondCenterX = 4 + (int)(chunkHash % 9);
+        int pondCenterY = 4 + (int)((chunkHash >> 8) % 9);
+        int pondRadius = 3 + (int)((chunkHash >> 16) % 4);
+        int pondDeltaX = localX - pondCenterX;
+        int pondDeltaY = localY - pondCenterY;
+        bool hasPond = chunkHash % 5 == 0;
+        if (hasPond && pondDeltaX * pondDeltaX + pondDeltaY * pondDeltaY <= pondRadius * pondRadius)
+        {
+            return new Tile { Type = TileType.Water };
+        }
+
+        uint tileHash = Hash(position.X, position.Y);
+        int roll = (int)(tileHash % 100);
+        TileType type =
+            roll < 7 ? TileType.Tree
+            : roll < 11 ? TileType.Bush
+            : roll < 15 ? TileType.TallGrass
+            : roll < 18 ? TileType.Flower
+            : roll == 42 ? TileType.Stone
+            : TileType.Grass;
+
+        return new Tile { Type = type };
+    }
+
+    private static int FloorDiv(int value, int divisor)
+    {
+        int result = value / divisor;
+        int remainder = value % divisor;
+        return remainder != 0 && ((remainder < 0) != (divisor < 0)) ? result - 1 : result;
+    }
+
+    private static int Mod(int value, int divisor)
+    {
+        int result = value % divisor;
+        return result < 0 ? result + Math.Abs(divisor) : result;
+    }
+
+    private static uint Hash(int x, int y)
+    {
+        unchecked
+        {
+            uint hash = 2166136261;
+            hash = (hash ^ (uint)x) * 16777619;
+            hash = (hash ^ (uint)y) * 16777619;
+            hash ^= hash >> 13;
+            hash *= 1274126177;
+            hash ^= hash >> 16;
+            return hash;
+        }
     }
 }

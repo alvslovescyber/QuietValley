@@ -19,7 +19,7 @@ public sealed class WorldRenderer(ArtAssets art, Texture2D pixel)
         );
 
         int waterFrame = (int)MathF.Floor((float)waterAnimation * 5f);
-        foreach ((GridPosition position, Tile tile) in state.World.Tiles())
+        foreach ((GridPosition position, Tile tile) in VisibleTiles(state.World, visibleWorld))
         {
             Rectangle worldRectangle = TileWorldRectangle(position);
             if (!visibleWorld.Intersects(worldRectangle))
@@ -32,13 +32,14 @@ public sealed class WorldRenderer(ArtAssets art, Texture2D pixel)
 
         DrawHouse(spriteBatch, camera);
         DrawCrops(spriteBatch, state, camera);
-        DrawProps(spriteBatch, state.World, camera);
+        DrawProps(spriteBatch, state.World, camera, visibleWorld);
     }
 
     public void DrawWaterOverlay(SpriteBatch spriteBatch, GameWorld world, Vector2 camera, double waterAnimation)
     {
+        Rectangle visibleWorld = VisibleWorldRectangle(camera);
         int shimmer = (int)MathF.Floor((float)waterAnimation * 10f);
-        foreach ((GridPosition position, Tile tile) in world.Tiles())
+        foreach ((GridPosition position, Tile tile) in VisibleTiles(world, visibleWorld))
         {
             if (tile.Type != TileType.Water || (position.X + position.Y + shimmer) % 5 != 0)
             {
@@ -100,7 +101,8 @@ public sealed class WorldRenderer(ArtAssets art, Texture2D pixel)
         Rectangle interactionRectangle
     )
     {
-        foreach ((GridPosition position, Tile tile) in world.Tiles())
+        Rectangle visibleWorld = VisibleWorldRectangle(camera);
+        foreach ((GridPosition position, Tile tile) in VisibleTiles(world, visibleWorld))
         {
             if (!tile.BlocksMovement)
             {
@@ -156,6 +158,11 @@ public sealed class WorldRenderer(ArtAssets art, Texture2D pixel)
                 or TileType.Fence
                 or TileType.ShippingBox
                 or TileType.House
+                or TileType.TownHouse
+                or TileType.Well
+                or TileType.Mailbox
+                or TileType.Signpost
+                or TileType.LampPost
             ? TileType.Grass
             : tileType;
 
@@ -331,9 +338,11 @@ public sealed class WorldRenderer(ArtAssets art, Texture2D pixel)
         }
     }
 
-    private void DrawProps(SpriteBatch spriteBatch, GameWorld world, Vector2 camera)
+    private void DrawProps(SpriteBatch spriteBatch, GameWorld world, Vector2 camera, Rectangle visibleWorld)
     {
-        foreach ((GridPosition position, Tile tile) in world.Tiles().OrderBy(entry => entry.Position.Y))
+        foreach (
+            (GridPosition position, Tile tile) in VisibleTiles(world, visibleWorld).OrderBy(entry => entry.Position.Y)
+        )
         {
             Rectangle tileRectangle = TileScreenRectangle(position, camera);
             switch (tile.Type)
@@ -396,10 +405,73 @@ public sealed class WorldRenderer(ArtAssets art, Texture2D pixel)
                         Color.White
                     );
                     break;
+                case TileType.TownHouse:
+                    DrawTownHouse(spriteBatch, position, tileRectangle);
+                    break;
+                case TileType.Well:
+                    DrawShadow(spriteBatch, new Rectangle(tileRectangle.X - 10, tileRectangle.Y + 8, 38, 10));
+                    spriteBatch.Draw(
+                        art.InteriorTown,
+                        new Rectangle(tileRectangle.X - 18, tileRectangle.Y - 34, 52, 62),
+                        ArtAssets.WellSource,
+                        Color.White
+                    );
+                    break;
+                case TileType.Mailbox:
+                    DrawShadow(spriteBatch, new Rectangle(tileRectangle.X + 1, tileRectangle.Y + 13, 12, 4));
+                    spriteBatch.Draw(
+                        art.InteriorTown,
+                        new Rectangle(tileRectangle.X - 4, tileRectangle.Y - 18, 28, 42),
+                        ArtAssets.MailboxSource,
+                        Color.White
+                    );
+                    break;
+                case TileType.Signpost:
+                    DrawShadow(spriteBatch, new Rectangle(tileRectangle.X - 1, tileRectangle.Y + 13, 18, 4));
+                    spriteBatch.Draw(
+                        art.InteriorTown,
+                        new Rectangle(tileRectangle.X - 10, tileRectangle.Y - 22, 42, 42),
+                        ArtAssets.SignpostSource,
+                        Color.White
+                    );
+                    break;
+                case TileType.LampPost:
+                    DrawShadow(spriteBatch, new Rectangle(tileRectangle.X + 2, tileRectangle.Y + 13, 12, 4));
+                    spriteBatch.Draw(
+                        art.InteriorTown,
+                        new Rectangle(tileRectangle.X - 8, tileRectangle.Y - 42, 32, 60),
+                        ArtAssets.LampPostSource,
+                        Color.White
+                    );
+                    break;
                 case TileType.SleepSpot:
                     DrawSleepMat(spriteBatch, tileRectangle);
                     break;
             }
+        }
+    }
+
+    private void DrawTownHouse(SpriteBatch spriteBatch, GridPosition position, Rectangle tileRectangle)
+    {
+        if (position == new GridPosition(36, 28))
+        {
+            DrawShadow(spriteBatch, new Rectangle(tileRectangle.X + 4, tileRectangle.Y + 78, 112, 13));
+            spriteBatch.Draw(
+                art.InteriorTown,
+                new Rectangle(tileRectangle.X - 6, tileRectangle.Y - 50, 124, 112),
+                ArtAssets.RedTownHouseSource,
+                Color.White
+            );
+        }
+        else if (position == new GridPosition(48, 28))
+        {
+            DrawShadow(spriteBatch, new Rectangle(tileRectangle.X + 4, tileRectangle.Y + 78, 98, 13));
+            spriteBatch.Draw(
+                art.InteriorTown,
+                new Rectangle(tileRectangle.X - 4, tileRectangle.Y - 44, 108, 104),
+                ArtAssets.YellowTownHouseSource,
+                Color.White
+            );
         }
     }
 
@@ -430,6 +502,25 @@ public sealed class WorldRenderer(ArtAssets art, Texture2D pixel)
             GameConstants.TileSize,
             GameConstants.TileSize
         );
+    }
+
+    private static Rectangle VisibleWorldRectangle(Vector2 camera)
+    {
+        return new Rectangle(
+            (int)camera.X - GameConstants.TileSize * 2,
+            (int)camera.Y - GameConstants.TileSize * 4,
+            GameConstants.VirtualWidth + GameConstants.TileSize * 4,
+            GameConstants.VirtualHeight + GameConstants.TileSize * 8
+        );
+    }
+
+    private static IEnumerable<(GridPosition Position, Tile Tile)> VisibleTiles(GameWorld world, Rectangle visibleWorld)
+    {
+        int minX = (int)MathF.Floor(visibleWorld.Left / (float)GameConstants.TileSize);
+        int minY = (int)MathF.Floor(visibleWorld.Top / (float)GameConstants.TileSize);
+        int maxX = (int)MathF.Floor((visibleWorld.Right - 1) / (float)GameConstants.TileSize);
+        int maxY = (int)MathF.Floor((visibleWorld.Bottom - 1) / (float)GameConstants.TileSize);
+        return world.TilesIn(minX, minY, maxX, maxY);
     }
 
     private static Rectangle TileScreenRectangle(GridPosition position, Vector2 camera)

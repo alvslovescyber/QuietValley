@@ -15,7 +15,14 @@ public sealed class PlayerRenderer(ArtAssets art, Texture2D pixel)
         Rectangle source = ArtAssets.PlayerSource(player.Facing, frame);
         int bob = player.IsMoving && frame is 1 or 3 ? -1 : 0;
         Rectangle destination = new((int)screen.X - 4, (int)screen.Y + bob, 24, 16);
-        spriteBatch.Draw(art.Player, destination, source, Color.White);
+        if (player.IsSwimming)
+        {
+            DrawSwimming(spriteBatch, player, screen, source, destination);
+        }
+        else
+        {
+            spriteBatch.Draw(art.Player, destination, source, Color.White);
+        }
 
         if (player.ToolUseTimer > 0)
         {
@@ -26,6 +33,46 @@ public sealed class PlayerRenderer(ArtAssets art, Texture2D pixel)
         {
             DrawFishingLine(spriteBatch, player, screen);
         }
+    }
+
+    private void DrawSwimming(
+        SpriteBatch spriteBatch,
+        PlayerController player,
+        Vector2 screen,
+        Rectangle source,
+        Rectangle destination
+    )
+    {
+        Rectangle headSource = new(source.X, source.Y, source.Width, 10);
+        Rectangle headDestination = new(destination.X, destination.Y + 2, destination.Width, 10);
+        spriteBatch.Draw(art.Player, headDestination, headSource, Color.White);
+        spriteBatch.Draw(
+            pixel,
+            new Rectangle((int)screen.X + 1, (int)screen.Y + 11, 15, 3),
+            new Color(102, 205, 232, 185)
+        );
+        spriteBatch.Draw(
+            pixel,
+            new Rectangle((int)screen.X + 3, (int)screen.Y + 13, 11, 2),
+            new Color(35, 118, 178, 150)
+        );
+
+        int bubbleOffset = (int)MathF.Floor(player.WalkCycle) % 10;
+        DrawBubble(spriteBatch, (int)screen.X + 16, (int)screen.Y + 6 - bubbleOffset / 2, 3);
+        if (bubbleOffset > 4)
+        {
+            DrawBubble(spriteBatch, (int)screen.X + 20, (int)screen.Y + 2, 2);
+        }
+    }
+
+    private void DrawBubble(SpriteBatch spriteBatch, int x, int y, int size)
+    {
+        spriteBatch.Draw(pixel, new Rectangle(x, y, size, size), new Color(220, 250, 255, 180));
+        spriteBatch.Draw(
+            pixel,
+            new Rectangle(x + 1, y + 1, Math.Max(1, size - 2), Math.Max(1, size - 2)),
+            new Color(102, 205, 232, 110)
+        );
     }
 
     private void DrawToolSwing(SpriteBatch spriteBatch, PlayerController player, Vector2 screen)

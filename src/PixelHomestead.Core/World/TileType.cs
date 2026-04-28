@@ -16,6 +16,11 @@ public enum TileType
     Barrel,
     Fence,
     House,
+    TownHouse,
+    Well,
+    Mailbox,
+    Signpost,
+    LampPost,
     ShippingBox,
     SleepSpot,
 }

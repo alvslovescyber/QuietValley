@@ -231,27 +231,7 @@ def make_icons() -> None:
     for index in range(16, 20):
         x = index * 16
         rect(d, (x + 1, 1, x + 14, 14), "#fff1be")
-    # hoe
-    rect(d, (7, 3, 8, 14), "#d5903b")
-    rect(d, (4, 2, 11, 4), "#5a301d")
-    # water
-    x = 16
-    rect(d, (x + 3, 7, x + 11, 13), "#3298cc")
-    rect(d, (x + 9, 4, x + 14, 7), "#3298cc")
-    rect(d, (x + 12, 3, x + 14, 5), "#8fe3ee")
-    # axe
-    x = 32
-    rect(d, (x + 7, 3, x + 8, 14), "#d5903b")
-    rect(d, (x + 4, 2, x + 11, 7), "#a6aba0")
-    # pick
-    x = 48
-    rect(d, (x + 7, 3, x + 8, 14), "#d5903b")
-    rect(d, (x + 3, 2, x + 13, 4), "#909790")
-    # rod
-    x = 64
-    rect(d, (x + 6, 1, x + 6, 14), "#d5903b")
-    rect(d, (x + 7, 4, x + 12, 4), "#fff1be")
-    rect(d, (x + 12, 7, x + 14, 9), "#8fe3ee")
+    paste_ai_tool_icons(atlas)
     # seeds
     for index, leaf in [(5, "#55b94a"), (6, "#72d45b"), (7, "#43b455"), (8, "#66c94e")]:
         x = index * 16
@@ -270,18 +250,90 @@ def make_icons() -> None:
         rect(d, (x + 2, 7, x + 11, 11), color)
         rect(d, (x + 10, 5, x + 14, 13), "#287ab5")
         px(d, x + 4, 8, "#37231b")
-    # scythe, hammer, shovel
-    x = 16 * 16
-    rect(d, (x + 7, 3, x + 8, 14), "#d5903b")
-    rect(d, (x + 4, 2, x + 12, 3), "#a6aba0")
-    rect(d, (x + 11, 3, x + 13, 5), "#a6aba0")
-    x = 17 * 16
-    rect(d, (x + 7, 4, x + 8, 14), "#d5903b")
-    rect(d, (x + 4, 2, x + 12, 6), "#909790")
-    x = 18 * 16
-    rect(d, (x + 7, 3, x + 8, 14), "#d5903b")
-    rect(d, (x + 5, 2, x + 10, 5), "#909790")
+    if not (OUT / "tool_icons_ai_source.png").exists():
+        # scythe, hammer, shovel fallback
+        x = 16 * 16
+        rect(d, (x + 7, 3, x + 8, 14), "#d5903b")
+        rect(d, (x + 4, 2, x + 12, 3), "#a6aba0")
+        rect(d, (x + 11, 3, x + 13, 5), "#a6aba0")
+        x = 17 * 16
+        rect(d, (x + 7, 4, x + 8, 14), "#d5903b")
+        rect(d, (x + 4, 2, x + 12, 6), "#909790")
+        x = 18 * 16
+        rect(d, (x + 7, 3, x + 8, 14), "#d5903b")
+        rect(d, (x + 5, 2, x + 10, 5), "#909790")
     atlas.save(OUT / "icons.png")
+
+
+def paste_ai_tool_icons(atlas: Image.Image) -> None:
+    source_path = OUT / "tool_icons_ai_source.png"
+    if not source_path.exists():
+        return
+
+    source = Image.open(source_path).convert("RGBA")
+    cells = extract_ai_icon_cells(source)
+    if len(cells) < 9:
+        return
+
+    atlas_indices = [0, 1, 2, 3, 4, 5, 16, 17, 18]
+    for cell, atlas_index in zip(cells[:9], atlas_indices):
+        icon = cell.resize((16, 16), Image.Resampling.LANCZOS)
+        atlas.alpha_composite(icon, (atlas_index * 16, 0))
+
+
+def extract_ai_icon_cells(source: Image.Image) -> list[Image.Image]:
+    width, height = source.size
+
+    def is_background(pixel: tuple[int, int, int, int]) -> bool:
+        red, green, blue, alpha = pixel
+        return alpha > 0 and red > 220 and green < 80 and blue > 220
+
+    column_has_icon = []
+    for x in range(width):
+        non_background = 0
+        for y in range(height):
+            if not is_background(source.getpixel((x, y))):
+                non_background += 1
+        column_has_icon.append(non_background > 20)
+
+    ranges: list[tuple[int, int]] = []
+    start: int | None = None
+    for x, has_icon in enumerate(column_has_icon):
+        if has_icon and start is None:
+            start = x
+        elif not has_icon and start is not None:
+            if x - start > 20:
+                ranges.append((start, x - 1))
+            start = None
+
+    if start is not None and width - start > 20:
+        ranges.append((start, width - 1))
+
+    cells: list[Image.Image] = []
+    for left, right in ranges[:9]:
+        top = height
+        bottom = 0
+        for x in range(left, right + 1):
+            for y in range(height):
+                if not is_background(source.getpixel((x, y))):
+                    top = min(top, y)
+                    bottom = max(bottom, y)
+
+        if top >= bottom:
+            continue
+
+        pad = 10
+        left = max(0, left - pad)
+        right = min(width - 1, right + pad)
+        top = max(0, top - pad)
+        bottom = min(height - 1, bottom + pad)
+        crop = source.crop((left, top, right + 1, bottom + 1))
+        square_size = max(crop.width, crop.height)
+        square = img((square_size, square_size))
+        square.alpha_composite(crop, ((square_size - crop.width) // 2, (square_size - crop.height) // 2))
+        cells.append(square)
+
+    return cells
 
 
 def make_ui() -> None:

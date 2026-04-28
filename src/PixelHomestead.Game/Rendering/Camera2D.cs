@@ -22,6 +22,11 @@ public sealed class Camera2D
 
     private static Vector2 Clamp(Vector2 target, GameWorld world)
     {
+        if (world.IsInfinite)
+        {
+            return target;
+        }
+
         float maxX = Math.Max(0, world.Width * GameConstants.TileSize - GameConstants.VirtualWidth);
         float maxY = Math.Max(0, world.Height * GameConstants.TileSize - GameConstants.VirtualHeight);
         return new Vector2(Math.Clamp(target.X, 0, maxX), Math.Clamp(target.Y, 0, maxY));

@@ -9,6 +9,7 @@ public sealed class PlayerController
 {
     private const float MaximumSpeed = 72f;
     private const float SprintSpeed = 104f;
+    private const float SwimSpeed = 46f;
     private const float Acceleration = 560f;
     private const float Deceleration = 720f;
     private const float InteractionDistance = 18f;
@@ -19,6 +20,7 @@ public sealed class PlayerController
     public Vector2 Velocity { get; private set; }
     public Direction Facing { get; private set; } = Direction.Down;
     public bool IsMoving => Velocity.LengthSquared() > 16f;
+    public bool IsSwimming { get; private set; }
     public float WalkCycle { get; private set; }
     public float ToolUseTimer { get; private set; }
     public float FishingCastTimer { get; private set; }
@@ -38,7 +40,11 @@ public sealed class PlayerController
 
     public bool Update(GameWorld world, PlayerState state, Vector2 input, bool sprinting, float deltaSeconds)
     {
-        float maximumSpeed = sprinting ? SprintSpeed : MaximumSpeed;
+        IsSwimming = world.GetTile(WorldToTile(Feet)).IsWater;
+        float maximumSpeed =
+            IsSwimming ? SwimSpeed
+            : sprinting ? SprintSpeed
+            : MaximumSpeed;
         if (input.LengthSquared() > 0.001f)
         {
             Facing = DirectionFromInput(input, Facing);
@@ -67,6 +73,7 @@ public sealed class PlayerController
         FishingCastTimer = Math.Max(0, FishingCastTimer - deltaSeconds);
 
         state.TilePosition = WorldToTile(Center);
+        IsSwimming = world.GetTile(WorldToTile(Feet)).IsWater;
         state.WorldX = Position.X;
         state.WorldY = Position.Y;
         state.Facing = Facing;
@@ -75,7 +82,7 @@ public sealed class PlayerController
         {
             _dustTimer = 0.16f;
             TileType footTile = world.GetTile(WorldToTile(Feet)).Type;
-            return footTile is TileType.Dirt or TileType.Path or TileType.Soil;
+            return !IsSwimming && footTile is TileType.Dirt or TileType.Path or TileType.Soil;
         }
 
         return false;

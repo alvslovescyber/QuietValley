@@ -9,20 +9,25 @@ namespace PixelHomestead.Game.UI;
 
 public sealed class GameUiRenderer(Texture2D pixel, PixelFont font, ArtAssets art)
 {
+    public static readonly Rectangle NewGameButton = new(54, 278, 98, 30);
+    public static readonly Rectangle LoadGameButton = new(164, 294, 98, 30);
+    public static readonly Rectangle SettingsButton = new(274, 278, 98, 30);
+    public static readonly Rectangle CreditsButton = new(384, 294, 98, 30);
+    public static readonly Rectangle QuitButton = new(494, 278, 98, 30);
+    public static readonly Rectangle ExitHomeButton = new(488, 306, 112, 26);
+    public static readonly Rectangle SleepHomeButton = new(368, 306, 104, 26);
+
     public void DrawMainMenu(SpriteBatch spriteBatch, Point mouse)
     {
         DrawTitleScene(spriteBatch);
-        DrawPanel(spriteBatch, new Rectangle(196, 45, 248, 70), PanelStyle.Parchment);
-        DrawTinyFlower(spriteBatch, 218, 74);
-        DrawTinyFlower(spriteBatch, 410, 74);
-        font.Draw(spriteBatch, "Pixel Homestead", new Vector2(222, 69), Palette.Text, 2);
-        font.Draw(spriteBatch, "A cozy farm life", new Vector2(260, 96), Palette.Text, 1);
+        DrawTitleSign(spriteBatch);
+        DrawMenuRibbon(spriteBatch);
 
-        DrawButton(spriteBatch, new Rectangle(252, 140, 136, 26), "New Game", mouse);
-        DrawButton(spriteBatch, new Rectangle(252, 174, 136, 26), "Load Game", mouse);
-        DrawButton(spriteBatch, new Rectangle(252, 208, 136, 26), "Settings", mouse);
-        DrawButton(spriteBatch, new Rectangle(252, 242, 136, 26), "Credits", mouse);
-        DrawButton(spriteBatch, new Rectangle(252, 276, 136, 26), "Quit", mouse);
+        DrawMenuButton(spriteBatch, NewGameButton, "New Farm", mouse, "sprout");
+        DrawMenuButton(spriteBatch, LoadGameButton, "Continue", mouse, "berry");
+        DrawMenuButton(spriteBatch, SettingsButton, "Settings", mouse, "gear");
+        DrawMenuButton(spriteBatch, CreditsButton, "Credits", mouse, "heart");
+        DrawMenuButton(spriteBatch, QuitButton, "Quit", mouse, "moon");
     }
 
     public void DrawHud(SpriteBatch spriteBatch, GameState state, Point mouse)
@@ -57,6 +62,31 @@ public sealed class GameUiRenderer(Texture2D pixel, PixelFont font, ArtAssets ar
             : state.Content.Items[selected.ItemId].DisplayName;
         DrawPanel(spriteBatch, new Rectangle(12, 320, 156, 24), PanelStyle.Compact);
         font.Draw(spriteBatch, selectedText, new Vector2(24, 329), Palette.Text, 1);
+    }
+
+    public void DrawOxygen(SpriteBatch spriteBatch, float normalized)
+    {
+        DrawPanel(spriteBatch, new Rectangle(214, 10, 212, 24), PanelStyle.Compact);
+        DrawBubbleIcon(spriteBatch, 225, 18);
+        font.Draw(spriteBatch, "Oxygen", new Vector2(242, 18), Palette.Text, 1);
+        DrawBar(spriteBatch, new Rectangle(294, 18, 112, 7), normalized, Palette.WaterLight);
+    }
+
+    public void DrawHomeInterior(SpriteBatch spriteBatch, Point mouse)
+    {
+        spriteBatch.Draw(
+            pixel,
+            new Rectangle(0, 0, GameConstants.VirtualWidth, GameConstants.VirtualHeight),
+            new Color(42, 25, 18)
+        );
+        spriteBatch.Draw(art.InteriorTown, new Rectangle(40, 20, 560, 300), ArtAssets.LivingRoomSource, Color.White);
+        DrawPanel(spriteBatch, new Rectangle(38, 20, 564, 304), PanelStyle.Compact);
+        spriteBatch.Draw(art.InteriorTown, new Rectangle(52, 32, 536, 276), ArtAssets.LivingRoomSource, Color.White);
+        DrawPanel(spriteBatch, new Rectangle(60, 22, 220, 30), PanelStyle.Compact);
+        font.Draw(spriteBatch, "Your Living Room", new Vector2(74, 34), Palette.Text, 1);
+        DrawButton(spriteBatch, SleepHomeButton, "Sleep", mouse);
+        DrawButton(spriteBatch, ExitHomeButton, "Exit Home", mouse);
+        font.Draw(spriteBatch, "Press E or Esc to leave.", new Vector2(68, 316), Palette.TextLight, 1);
     }
 
     public void DrawHotbar(SpriteBatch spriteBatch, GameState state, Point mouse)
@@ -233,10 +263,14 @@ public sealed class GameUiRenderer(Texture2D pixel, PixelFont font, ArtAssets ar
 
     public void DrawInteractionPrompt(SpriteBatch spriteBatch, string prompt, Vector2 worldPosition, Vector2 camera)
     {
-        Vector2 position = worldPosition - camera + new Vector2(-46, -18);
         int width = Math.Max(92, font.MeasureWidth(prompt, 1) + 16);
-        DrawPanel(spriteBatch, new Rectangle((int)position.X, (int)position.Y, width, 18), PanelStyle.Compact);
-        font.Draw(spriteBatch, prompt, position + new Vector2(8, 6), Palette.Text, 1);
+        Vector2 screenPosition = worldPosition - camera;
+        int x = Math.Clamp((int)screenPosition.X - width / 2, 6, GameConstants.VirtualWidth - width - 6);
+        int y = Math.Clamp((int)screenPosition.Y - 46, 8, GameConstants.VirtualHeight - 28);
+        Rectangle panel = new(x, y, width, 18);
+        DrawPanel(spriteBatch, panel, PanelStyle.Compact);
+        spriteBatch.Draw(pixel, new Rectangle((int)screenPosition.X - 2, panel.Bottom - 1, 4, 4), Palette.WoodDark);
+        font.Draw(spriteBatch, prompt, new Vector2(panel.X + 8, panel.Y + 6), Palette.Text, 1);
     }
 
     public void DrawToast(SpriteBatch spriteBatch, string text, string iconKey, Vector2 position, float alpha)
@@ -386,49 +420,109 @@ public sealed class GameUiRenderer(Texture2D pixel, PixelFont font, ArtAssets ar
 
     private void DrawTitleScene(SpriteBatch spriteBatch)
     {
-        for (int y = 0; y < GameConstants.VirtualHeight; y += 16)
-        {
-            for (int x = 0; x < GameConstants.VirtualWidth; x += 16)
-            {
-                int variant = Math.Abs(x * 7 + y * 11) % 4;
-                spriteBatch.Draw(
-                    art.Terrain,
-                    new Rectangle(x, y, 16, 16),
-                    ArtAssets.TerrainSource(Core.World.TileType.Grass, variant, 0),
-                    Color.White
-                );
-            }
-        }
+        spriteBatch.Draw(
+            art.MenuBackground,
+            new Rectangle(0, 0, GameConstants.VirtualWidth, GameConstants.VirtualHeight),
+            Color.White
+        );
+        spriteBatch.Draw(pixel, new Rectangle(0, 0, GameConstants.VirtualWidth, 118), new Color(14, 20, 64, 45));
+        spriteBatch.Draw(pixel, new Rectangle(0, 258, GameConstants.VirtualWidth, 102), new Color(20, 16, 12, 55));
+    }
 
-        for (int x = 0; x < GameConstants.VirtualWidth; x += 16)
-        {
-            spriteBatch.Draw(
-                art.Terrain,
-                new Rectangle(x, 236, 16, 16),
-                ArtAssets.TerrainSource(Core.World.TileType.Path, x / 16, 0),
-                Color.White
-            );
-            spriteBatch.Draw(
-                art.Terrain,
-                new Rectangle(x, 252, 16, 16),
-                ArtAssets.TerrainSource(Core.World.TileType.Water, x / 16, x / 8),
-                Color.White
-            );
-            spriteBatch.Draw(
-                art.Terrain,
-                new Rectangle(x, 268, 16, 16),
-                ArtAssets.TerrainSource(Core.World.TileType.Water, x / 16, x / 8 + 1),
-                Color.White
-            );
-        }
+    private void DrawTitleSign(SpriteBatch spriteBatch)
+    {
+        Rectangle sign = new(132, 36, 376, 112);
+        spriteBatch.Draw(pixel, new Rectangle(sign.X + 6, sign.Y + 8, sign.Width, sign.Height), Palette.PanelShadow);
+        spriteBatch.Draw(pixel, sign, new Color(117, 62, 32));
+        spriteBatch.Draw(
+            pixel,
+            new Rectangle(sign.X + 5, sign.Y + 5, sign.Width - 10, sign.Height - 10),
+            Palette.WoodLight
+        );
+        spriteBatch.Draw(
+            pixel,
+            new Rectangle(sign.X + 9, sign.Y + 9, sign.Width - 18, sign.Height - 18),
+            new Color(255, 199, 135)
+        );
+        spriteBatch.Draw(pixel, new Rectangle(sign.X + 14, sign.Y + 14, sign.Width - 28, 3), Palette.ParchmentLight);
+        spriteBatch.Draw(
+            pixel,
+            new Rectangle(sign.X + 14, sign.Bottom - 18, sign.Width - 28, 2),
+            new Color(196, 115, 57)
+        );
 
-        spriteBatch.Draw(art.Props, new Rectangle(72, 118, 112, 96), ArtAssets.HouseSource, Color.White);
-        spriteBatch.Draw(art.Props, new Rectangle(460, 180, 48, 54), ArtAssets.MushroomSource, Color.White);
-        spriteBatch.Draw(art.Props, new Rectangle(532, 206, 42, 48), ArtAssets.MushroomSource, Color.White);
-        spriteBatch.Draw(art.Props, new Rectangle(556, 124, 48, 72), ArtAssets.TreeSource, Color.White);
-        spriteBatch.Draw(art.Props, new Rectangle(420, 205, 36, 30), ArtAssets.BushSource, Color.White);
-        spriteBatch.Draw(art.Props, new Rectangle(205, 158, 24, 18), ArtAssets.FenceSource, Color.White);
-        spriteBatch.Draw(art.Props, new Rectangle(229, 158, 24, 18), ArtAssets.FenceSource, Color.White);
+        DrawTinyFlower(spriteBatch, sign.X + 28, sign.Y + 26);
+        DrawTinyFlower(spriteBatch, sign.Right - 46, sign.Y + 72);
+        DrawLeafCluster(spriteBatch, sign.X + 48, sign.Y - 10);
+        DrawLeafCluster(spriteBatch, sign.Right - 72, sign.Y + 6);
+
+        DrawCenteredText(spriteBatch, "PIXEL", new Rectangle(sign.X, sign.Y + 29, sign.Width, 24), Palette.WoodDark, 3);
+        DrawCenteredText(
+            spriteBatch,
+            "HOMESTEAD",
+            new Rectangle(sign.X, sign.Y + 72, sign.Width, 24),
+            Palette.WoodDark,
+            3
+        );
+    }
+
+    private void DrawMenuRibbon(SpriteBatch spriteBatch)
+    {
+        spriteBatch.Draw(pixel, new Rectangle(36, 270, 568, 68), new Color(35, 22, 17, 105));
+        spriteBatch.Draw(pixel, new Rectangle(48, 274, 544, 2), new Color(255, 231, 150, 70));
+    }
+
+    private void DrawMenuButton(SpriteBatch spriteBatch, Rectangle rectangle, string label, Point mouse, string icon)
+    {
+        DrawButton(spriteBatch, rectangle, label, mouse);
+        DrawMenuIcon(spriteBatch, rectangle.Center.X - 5, rectangle.Bottom - 9, icon);
+    }
+
+    private void DrawMenuIcon(SpriteBatch spriteBatch, int x, int y, string icon)
+    {
+        switch (icon)
+        {
+            case "sprout":
+                spriteBatch.Draw(pixel, new Rectangle(x + 4, y + 2, 2, 7), Palette.GrassDark);
+                spriteBatch.Draw(pixel, new Rectangle(x, y + 3, 5, 3), Palette.Energy);
+                spriteBatch.Draw(pixel, new Rectangle(x + 5, y, 5, 3), Palette.GrassLight);
+                break;
+            case "berry":
+                spriteBatch.Draw(pixel, new Rectangle(x + 2, y + 3, 7, 7), Palette.FlowerPink);
+                spriteBatch.Draw(pixel, new Rectangle(x + 5, y + 1, 3, 3), Palette.GrassDark);
+                spriteBatch.Draw(pixel, new Rectangle(x + 4, y + 5, 2, 2), Palette.ParchmentLight);
+                break;
+            case "gear":
+                spriteBatch.Draw(pixel, new Rectangle(x + 2, y + 2, 8, 8), Palette.Rock);
+                spriteBatch.Draw(pixel, new Rectangle(x + 4, y + 4, 4, 4), Palette.WoodDark);
+                spriteBatch.Draw(pixel, new Rectangle(x + 5, y + 5, 2, 2), Palette.ParchmentLight);
+                break;
+            case "heart":
+                spriteBatch.Draw(pixel, new Rectangle(x + 1, y + 2, 4, 4), Palette.FlowerPink);
+                spriteBatch.Draw(pixel, new Rectangle(x + 6, y + 2, 4, 4), Palette.FlowerPink);
+                spriteBatch.Draw(pixel, new Rectangle(x + 3, y + 5, 6, 4), Palette.FlowerPink);
+                break;
+            default:
+                spriteBatch.Draw(pixel, new Rectangle(x + 3, y + 2, 6, 6), Palette.Highlight);
+                spriteBatch.Draw(pixel, new Rectangle(x + 1, y + 5, 8, 3), Palette.ParchmentLight);
+                break;
+        }
+    }
+
+    private void DrawCenteredText(SpriteBatch spriteBatch, string text, Rectangle bounds, Color color, int scale)
+    {
+        int width = font.MeasureWidth(text, scale);
+        Vector2 position = new(bounds.Center.X - width / 2, bounds.Y);
+        font.Draw(spriteBatch, text, position + new Vector2(scale, scale), new Color(103, 59, 35), scale);
+        font.Draw(spriteBatch, text, position, color, scale);
+    }
+
+    private void DrawLeafCluster(SpriteBatch spriteBatch, int x, int y)
+    {
+        spriteBatch.Draw(pixel, new Rectangle(x + 8, y + 9, 2, 12), Palette.GrassDark);
+        spriteBatch.Draw(pixel, new Rectangle(x, y + 8, 10, 5), Palette.GrassLight);
+        spriteBatch.Draw(pixel, new Rectangle(x + 9, y + 2, 9, 6), Palette.Energy);
+        spriteBatch.Draw(pixel, new Rectangle(x + 5, y + 15, 10, 5), Palette.GrassLight);
     }
 
     private void DrawSlot(SpriteBatch spriteBatch, Rectangle rectangle, bool selected, bool hovered)
@@ -482,6 +576,13 @@ public sealed class GameUiRenderer(Texture2D pixel, PixelFont font, ArtAssets ar
         };
         spriteBatch.Draw(pixel, new Rectangle(x, y, 8, 8), color * alpha);
         spriteBatch.Draw(pixel, new Rectangle(x + 2, y + 2, 4, 2), Palette.ParchmentLight * alpha);
+    }
+
+    private void DrawBubbleIcon(SpriteBatch spriteBatch, int x, int y)
+    {
+        spriteBatch.Draw(pixel, new Rectangle(x, y, 9, 9), Palette.WaterLight);
+        spriteBatch.Draw(pixel, new Rectangle(x + 2, y + 2, 5, 5), new Color(255, 255, 255, 145));
+        spriteBatch.Draw(pixel, new Rectangle(x + 5, y + 1, 2, 2), Color.White);
     }
 
     private void DrawOverlay(SpriteBatch spriteBatch)

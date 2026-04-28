@@ -16,6 +16,8 @@ public sealed class ArtAssets : IDisposable
         Player = LoadTexture(graphicsDevice, Path.Combine(assetDirectory, "player.png"));
         Icons = LoadTexture(graphicsDevice, Path.Combine(assetDirectory, "icons.png"));
         Ui = LoadTexture(graphicsDevice, Path.Combine(assetDirectory, "ui.png"));
+        MenuBackground = LoadTexture(graphicsDevice, Path.Combine(assetDirectory, "menu_background_ai_source.png"));
+        InteriorTown = LoadTexture(graphicsDevice, Path.Combine(assetDirectory, "interior_town.png"));
     }
 
     public Texture2D Terrain { get; }
@@ -23,6 +25,8 @@ public sealed class ArtAssets : IDisposable
     public Texture2D Player { get; }
     public Texture2D Icons { get; }
     public Texture2D Ui { get; }
+    public Texture2D MenuBackground { get; }
+    public Texture2D InteriorTown { get; }
 
     public static Rectangle TerrainSource(TileType tileType, int variant, int waterFrame)
     {
@@ -38,7 +42,7 @@ public sealed class ArtAssets : IDisposable
             _ => Math.Abs(variant) % 4,
         };
 
-        return IconCell(index);
+        return Cell(index);
     }
 
     public static Rectangle IconSource(ItemDefinition item)
@@ -69,7 +73,7 @@ public sealed class ArtAssets : IDisposable
             },
         };
 
-        return Cell(index);
+        return IconCell(index);
     }
 
     public static Rectangle PlayerSource(Direction direction, int frame)
@@ -93,6 +97,13 @@ public sealed class ArtAssets : IDisposable
     public static Rectangle FenceSource => new(160, 14, 24, 18);
     public static Rectangle ShippingBoxSource => new(192, 12, 20, 20);
     public static Rectangle HouseSource => new(0, 48, 112, 96);
+    public static Rectangle LivingRoomSource => new(26, 52, 736, 602);
+    public static Rectangle RedTownHouseSource => new(785, 50, 360, 410);
+    public static Rectangle YellowTownHouseSource => new(1170, 67, 320, 390);
+    public static Rectangle WellSource => new(795, 488, 160, 190);
+    public static Rectangle MailboxSource => new(975, 510, 86, 150);
+    public static Rectangle SignpostSource => new(1086, 510, 140, 140);
+    public static Rectangle LampPostSource => new(1378, 494, 104, 196);
 
     private static Rectangle Cell(int index)
     {
@@ -122,5 +133,7 @@ public sealed class ArtAssets : IDisposable
         Player.Dispose();
         Icons.Dispose();
         Ui.Dispose();
+        MenuBackground.Dispose();
+        InteriorTown.Dispose();
     }
 }

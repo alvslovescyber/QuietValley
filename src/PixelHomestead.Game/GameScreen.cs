@@ -8,4 +8,5 @@ public enum GameScreen
     Pause,
     Settings,
     Credits,
+    HomeInterior,
 }

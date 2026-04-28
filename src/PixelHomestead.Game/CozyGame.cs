@@ -45,11 +45,14 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
     private double _waterAnimation;
     private float _sleepFade;
     private float _sprintEnergyTimer;
+    private float _oxygenSeconds = MaximumOxygenSeconds;
     private int? _draggedInventorySlotIndex;
     private bool _isFishing;
     private float _fishingTimer;
     private bool _fishBiting;
     private GridPosition _fishingTarget;
+
+    private const float MaximumOxygenSeconds = 8f;
 
     public CozyGame()
     {
@@ -138,6 +141,9 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
             case GameScreen.Settings:
                 RequireUi().DrawSettings(_spriteBatch, mouse, _settings);
                 break;
+            case GameScreen.HomeInterior:
+                RequireUi().DrawHomeInterior(_spriteBatch, mouse);
+                break;
             default:
                 DrawGameplay(_spriteBatch);
                 break;
@@ -189,6 +195,7 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
         Vector2 movement = _bindings.ReadMovement(_input);
         bool sprinting = CanSprint(state, movement, deltaSeconds);
         bool spawnedDust = _player.Update(state.World, state.Player, movement, sprinting, deltaSeconds);
+        UpdateSwimmingOxygen(state, deltaSeconds);
         if (spawnedDust)
         {
             _particles.SpawnDust(_player.Feet);
@@ -218,24 +225,24 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
         Point mouse = VirtualMousePosition();
         if (_screen == GameScreen.MainMenu)
         {
-            if (Clicked(mouse, new Rectangle(252, 140, 136, 26)))
+            if (Clicked(mouse, GameUiRenderer.NewGameButton))
             {
                 StartNewGame();
             }
-            else if (Clicked(mouse, new Rectangle(252, 174, 136, 26)))
+            else if (Clicked(mouse, GameUiRenderer.LoadGameButton))
             {
                 LoadGame();
             }
-            else if (Clicked(mouse, new Rectangle(252, 208, 136, 26)))
+            else if (Clicked(mouse, GameUiRenderer.SettingsButton))
             {
                 _returnFromSettings = GameScreen.MainMenu;
                 _screen = GameScreen.Settings;
             }
-            else if (Clicked(mouse, new Rectangle(252, 242, 136, 26)))
+            else if (Clicked(mouse, GameUiRenderer.CreditsButton))
             {
                 _screen = GameScreen.Credits;
             }
-            else if (Clicked(mouse, new Rectangle(252, 276, 136, 26)))
+            else if (Clicked(mouse, GameUiRenderer.QuitButton))
             {
                 Exit();
             }
@@ -325,6 +332,26 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
             _screen = GameScreen.MainMenu;
             _audio.PlaySfx("menu_close");
         }
+        else if (_screen == GameScreen.HomeInterior)
+        {
+            if (
+                _bindings.CancelPressed(_input)
+                || _bindings.InteractPressed(_input)
+                || Clicked(mouse, GameUiRenderer.ExitHomeButton)
+            )
+            {
+                _screen = GameScreen.Playing;
+                _audio.PlaySfx("door_close");
+            }
+            else if (Clicked(mouse, GameUiRenderer.SleepHomeButton))
+            {
+                RequireState().Sleep();
+                SaveGame();
+                _sleepFade = 1f;
+                _screen = GameScreen.Playing;
+                _toasts.Add("You slept in your cozy home.");
+            }
+        }
     }
 
     private void DrawGameplay(SpriteBatch spriteBatch)
@@ -352,6 +379,10 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
                 );
         }
         RequireUi().DrawHud(spriteBatch, state, VirtualMousePosition());
+        if (_player.IsSwimming)
+        {
+            RequireUi().DrawOxygen(spriteBatch, _oxygenSeconds / MaximumOxygenSeconds);
+        }
 
         string? prompt = InteractionPrompt(state);
         if (prompt is not null)
@@ -389,6 +420,13 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
             _particles.SpawnPickup(_player.Center);
             _audio.PlaySfx("sleep");
             _toasts.Add("A new day begins.");
+            return;
+        }
+
+        if (IsHouseEntryTarget(target))
+        {
+            _screen = GameScreen.HomeInterior;
+            _audio.PlaySfx("door_open");
             return;
         }
 
@@ -585,6 +623,11 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
         GridPosition target = _player.InteractionTarget();
         InventorySlot selectedSlot = state.Inventory[state.Player.SelectedHotbarIndex];
         ItemDefinition? selectedItem = selectedSlot.ItemId is null ? null : state.Content.Items[selectedSlot.ItemId];
+        if (IsHouseEntryTarget(target))
+        {
+            return "Press E to Enter Home";
+        }
+
         return state.World.GetTile(target).Type switch
         {
             TileType.SleepSpot => "Press E to Sleep",
@@ -599,6 +642,36 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
                 "Water Crop",
             _ => state.World.GetCrop(target) is not null ? "Press E to Harvest" : null,
         };
+    }
+
+    private bool IsHouseEntryTarget(GridPosition target)
+    {
+        return target.Y is >= 11 and <= 13 && target.X is >= 6 and <= 9;
+    }
+
+    private void UpdateSwimmingOxygen(GameState state, float deltaSeconds)
+    {
+        if (_player.IsSwimming)
+        {
+            _oxygenSeconds = Math.Max(0, _oxygenSeconds - deltaSeconds);
+            if (_oxygenSeconds <= 2f && (int)(_oxygenSeconds * 10) % 10 == 0)
+            {
+                _toasts.Add("Oxygen low!", "warn");
+            }
+
+            if (_oxygenSeconds <= 0)
+            {
+                state.Player.TilePosition = new GridPosition(14, 18);
+                state.Player.WorldX = 14 * 16;
+                state.Player.WorldY = 18 * 16;
+                ResetPlayerFromState();
+                _oxygenSeconds = MaximumOxygenSeconds;
+                _toasts.Add("You washed ashore.", "warn");
+            }
+            return;
+        }
+
+        _oxygenSeconds = Math.Min(MaximumOxygenSeconds, _oxygenSeconds + deltaSeconds * 2.5f);
     }
 
     private void UpdateHotbarSelection(GameState state)

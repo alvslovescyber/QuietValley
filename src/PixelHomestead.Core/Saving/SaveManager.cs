@@ -179,6 +179,14 @@ public sealed class SaveManager
                 );
             }
 
+            if (state.World.BlocksMovement(state.Player.TilePosition))
+            {
+                state.Player.TilePosition = new GridPosition(14, 18);
+                state.Player.WorldX = 14 * 16;
+                state.Player.WorldY = 18 * 16;
+                state.Player.Facing = Direction.Down;
+            }
+
             return state;
         }
     }

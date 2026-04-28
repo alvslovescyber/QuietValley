@@ -21,7 +21,7 @@ public sealed class SaveAndEnergyTests
 
         try
         {
-            state.Player.TilePosition = new GridPosition(7, 9);
+            state.Player.TilePosition = new GridPosition(16, 20);
             state.Player.WorldX = 123.5f;
             state.Player.WorldY = 246.25f;
             state.Player.SelectedHotbarIndex = 4;
@@ -31,7 +31,7 @@ public sealed class SaveAndEnergyTests
 
             GameState loaded = manager.Load(content);
 
-            Assert.Equal(new GridPosition(7, 9), loaded.Player.TilePosition);
+            Assert.Equal(new GridPosition(16, 20), loaded.Player.TilePosition);
             Assert.Equal(123.5f, loaded.Player.WorldX);
             Assert.Equal(246.25f, loaded.Player.WorldY);
             Assert.Equal(4, loaded.Player.SelectedHotbarIndex);
@@ -70,6 +70,65 @@ public sealed class SaveAndEnergyTests
             Assert.Single(loaded.Economy.ShippingBin);
             Assert.Equal("turnip", loaded.Economy.ShippingBin[0].ItemId);
             Assert.Equal(2, loaded.Economy.ShippingBin[0].Quantity);
+        }
+        finally
+        {
+            string? saveDirectory = Path.GetDirectoryName(manager.SavePath);
+            if (!string.IsNullOrWhiteSpace(saveDirectory) && Directory.Exists(saveDirectory))
+            {
+                Directory.Delete(saveDirectory, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public void SaveManager_RespawnsPlayerIfSavedInsideBlockedHouseTile()
+    {
+        ContentDatabase content = LoadContent();
+        GameState state = new(content);
+        string testGameName = $"PixelHomesteadTests-{Guid.NewGuid():N}";
+        SaveManager manager = new(testGameName);
+
+        try
+        {
+            state.Player.TilePosition = new GridPosition(7, 8);
+            state.Player.WorldX = 7 * 16;
+            state.Player.WorldY = 8 * 16;
+
+            manager.Save(state);
+
+            GameState loaded = manager.Load(content);
+
+            Assert.Equal(new GridPosition(14, 18), loaded.Player.TilePosition);
+            Assert.Equal(14 * 16, loaded.Player.WorldX);
+            Assert.Equal(18 * 16, loaded.Player.WorldY);
+        }
+        finally
+        {
+            string? saveDirectory = Path.GetDirectoryName(manager.SavePath);
+            if (!string.IsNullOrWhiteSpace(saveDirectory) && Directory.Exists(saveDirectory))
+            {
+                Directory.Delete(saveDirectory, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public void SaveManager_CorruptSaveFallsBackToNewGame()
+    {
+        ContentDatabase content = LoadContent();
+        string testGameName = $"PixelHomesteadTests-{Guid.NewGuid():N}";
+        SaveManager manager = new(testGameName);
+
+        try
+        {
+            File.WriteAllText(manager.SavePath, "{ definitely not valid json");
+
+            GameState loaded = manager.Load(content);
+
+            Assert.Equal(new GridPosition(14, 18), loaded.Player.TilePosition);
+            Assert.Equal(250, loaded.Economy.Coins);
+            Assert.Equal(EnergySystem.MaximumEnergy, loaded.Energy.CurrentEnergy);
         }
         finally
         {
