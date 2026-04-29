@@ -1,0 +1,11 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="QuietValley" type="DotNetProject" factoryName=".NET Project">
+    <option name="PROJECT_PATH" value="$PROJECT_DIR$/src/QuietValley.Game/QuietValley.Game.csproj" />
+    <option name="PROGRAM_PARAMETERS" value="" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/src/QuietValley.Game/bin/Debug/net9.0" />
+    <option name="PASS_PARENT_ENVS" value="1" />
+    <method v="2">
+      <option name="Build" />
+    </method>
+  </configuration>
+</component>

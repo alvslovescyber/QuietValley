@@ -1,9 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Tests" type="DotNetProject" factoryName=".NET Project">
-    <option
-      name="PROJECT_PATH"
-      value="$PROJECT_DIR$/tests/PixelHomestead.SmokeTests/PixelHomestead.SmokeTests.csproj"
-    />
+    <option name="PROJECT_PATH" value="$PROJECT_DIR$/tests/QuietValley.SmokeTests/QuietValley.SmokeTests.csproj" />
     <option name="PROGRAM_PARAMETERS" value="" />
     <option name="PASS_PARENT_ENVS" value="1" />
     <method v="2">

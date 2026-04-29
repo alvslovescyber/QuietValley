@@ -29,13 +29,13 @@ jobs:
         run: dotnet tool restore
 
       - name: Restore packages
-        run: dotnet restore PixelHomestead.sln
+        run: dotnet restore QuietValley.sln
 
       - name: CSharpier check
         run: dotnet csharpier check .
 
       - name: Build game
-        run: dotnet build src/PixelHomestead.Game/PixelHomestead.Game.csproj --configuration Release --no-restore
+        run: dotnet build src/QuietValley.Game/QuietValley.Game.csproj --configuration Release --no-restore
 
       - name: Test
-        run: dotnet test tests/PixelHomestead.SmokeTests/PixelHomestead.SmokeTests.csproj --configuration Release --no-restore --collect:"XPlat Code Coverage" --logger trx
+        run: dotnet test tests/QuietValley.SmokeTests/QuietValley.SmokeTests.csproj --configuration Release --no-restore --collect:"XPlat Code Coverage" --logger trx

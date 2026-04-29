@@ -1,6 +1,6 @@
-# Pixel Homestead
+# QuietValley
 
-Pixel Homestead is a macOS-first C# cozy farming and life-simulation game foundation built with MonoGame DesktopGL. The project is focused on a bright pixel-art countryside fantasy: build a farm, grow crops, fish in ponds, explore an expanding landscape, return home, and progress through calm daily routines at your own pace.
+QuietValley is a macOS-first C# cozy farming and life-simulation game foundation built with MonoGame DesktopGL. The project is focused on a bright pixel-art countryside fantasy: build a farm, grow crops, fish in ponds, explore an expanding landscape, return home, and progress through calm daily routines at your own pace.
 
 The current build is not a finished commercial game yet. It is a playable, modular foundation with original generated pixel-art assets, custom game UI, core farming/fishing/economy systems, save/load, settings, and automated tests.
 
@@ -8,26 +8,26 @@ The current build is not a finished commercial game yet. It is a playable, modul
 
 ### Title Screen Direction
 
-![Pixel Homestead title screen art](docs/images/home-screen-showcase.png)
+![QuietValley title screen art](docs/images/home-screen-showcase.png)
 
 The title screen uses a new original generated pixel-art countryside scene with a warm valley sunset, farmhouse, pond, fences, lanterns, flowers, and built-in wooden/parchment menu plaques. The runtime draws crisp labels and hover highlights over the generated UI artwork.
 
 ### Runtime Asset Showcase
 
-![Pixel Homestead runtime assets](docs/images/runtime-assets-showcase.png)
+![QuietValley runtime assets](docs/images/runtime-assets-showcase.png)
 
 The active runtime atlases now use the generated replacement assets for grass, water, farm soil, dirt paths, rocks, trees, bushes, props, fences, houses, town objects, swimming frames, and water ripples. Chroma-key purple backgrounds are stripped during atlas generation.
 
 ### Interior and Town Asset Direction
 
-![Pixel Homestead interior and town assets](docs/images/interior-town-assets.png)
+![QuietValley interior and town assets](docs/images/interior-town-assets.png)
 
 The house/interior pass adds a cozy living room screen, town house concepts, well, mailbox, signpost, planter, lamp post, fireplace, bed, sofa, bookshelf, and warm wood furniture references. These assets are original generated project assets and are wired into the runtime where useful.
 The documentation sheet is composited on a neutral meadow/parchment background so there is no visible purple chroma-key backdrop.
 
 ### Tool and Item Icons
 
-![Pixel Homestead generated tool and item icons](docs/images/tool-and-item-icons.png)
+![QuietValley generated tool and item icons](docs/images/tool-and-item-icons.png)
 
 The hotbar uses a regenerated clean 3x3 parchment tool source sheet for hoe, watering can, axe, pickaxe, fishing rod, seed bag, scythe, hammer, and shovel. Legacy magenta-backed tool sources were removed from the runtime icon pipeline.
 
@@ -52,15 +52,15 @@ The hotbar uses a regenerated clean 3x3 parchment tool source sheet for hoe, wat
 ## Run
 
 ```bash
-dotnet run --project src/PixelHomestead.Game/PixelHomestead.Game.csproj
+dotnet run --project src/QuietValley.Game/QuietValley.Game.csproj
 ```
 
 ## Validate
 
 ```bash
 dotnet csharpier check .
-dotnet build PixelHomestead.sln --no-restore
-dotnet test tests/PixelHomestead.SmokeTests/PixelHomestead.SmokeTests.csproj --no-restore --collect:"XPlat Code Coverage"
+dotnet build QuietValley.sln --no-restore
+dotnet test tests/QuietValley.SmokeTests/QuietValley.SmokeTests.csproj --no-restore --collect:"XPlat Code Coverage"
 ```
 
 ## Developer Workflow
@@ -72,8 +72,8 @@ dotnet csharpier check .
 ./scripts/check.sh
 ```
 
-- VS Code: use `Run and Debug` → `Run Pixel Homestead`.
-- JetBrains Rider: use the checked-in `.run/Pixel Homestead.run.xml` run configuration.
+- VS Code: use `Run and Debug` → `Run QuietValley`.
+- JetBrains Rider: use the checked-in `.run/QuietValley.run.xml` run configuration.
 - Tests use xUnit with `Microsoft.NET.Test.Sdk` and `coverlet.collector`.
 - Formatting uses CSharpier.
 - CI runs on GitHub Actions for restore, CSharpier, build, and xUnit tests with coverage.
@@ -92,29 +92,29 @@ dotnet csharpier check .
 
 ## Architecture
 
-- `src/PixelHomestead.Core/Core`: shared primitives
-- `src/PixelHomestead.Core/Player`: player state
-- `src/PixelHomestead.Core/World`: tile map, procedural terrain, collision, crop state
-- `src/PixelHomestead.Core/Items`: item, crop, inventory, and tool models
-- `src/PixelHomestead.Core/Farming`: farming system
-- `src/PixelHomestead.Core/Fishing`: fishing system and fish definitions
-- `src/PixelHomestead.Core/Saving`: save system
-- `src/PixelHomestead.Core/Economy`: shipping and coin economy
-- `src/PixelHomestead.Core/Time`: day/time system
-- `src/PixelHomestead.Core/Energy`: energy system
-- `src/PixelHomestead.Core/Data`: JSON data loading
-- `src/PixelHomestead.Game`: MonoGame rendering, input, menus, HUD, and app entrypoint
-- `src/PixelHomestead.Game/Data`: item, crop, tool, fish, and tile definitions copied to output
-- `src/PixelHomestead.Game/Assets`: generated sprite, tile, UI, menu, interior, and audio-ready folders
-- `src/PixelHomestead.Game/Rendering`: world rendering, camera, and generated atlas loading
-- `src/PixelHomestead.Game/Player`: continuous player controller and renderer
-- `src/PixelHomestead.Game/Effects`: particles and game-feel effects
-- `src/PixelHomestead.Game/Input`: input bindings and future remapping structure
-- `src/PixelHomestead.Game/UI`: game UI renderer, menus, HUD, toast/dialogue rendering, and pixel font
+- `src/QuietValley.Core/Core`: shared primitives
+- `src/QuietValley.Core/Player`: player state
+- `src/QuietValley.Core/World`: tile map, procedural terrain, collision, crop state
+- `src/QuietValley.Core/Items`: item, crop, inventory, and tool models
+- `src/QuietValley.Core/Farming`: farming system
+- `src/QuietValley.Core/Fishing`: fishing system and fish definitions
+- `src/QuietValley.Core/Saving`: save system
+- `src/QuietValley.Core/Economy`: shipping and coin economy
+- `src/QuietValley.Core/Time`: day/time system
+- `src/QuietValley.Core/Energy`: energy system
+- `src/QuietValley.Core/Data`: JSON data loading
+- `src/QuietValley.Game`: MonoGame rendering, input, menus, HUD, and app entrypoint
+- `src/QuietValley.Game/Data`: item, crop, tool, fish, and tile definitions copied to output
+- `src/QuietValley.Game/Assets`: generated sprite, tile, UI, menu, interior, and audio-ready folders
+- `src/QuietValley.Game/Rendering`: world rendering, camera, and generated atlas loading
+- `src/QuietValley.Game/Player`: continuous player controller and renderer
+- `src/QuietValley.Game/Effects`: particles and game-feel effects
+- `src/QuietValley.Game/Input`: input bindings and future remapping structure
+- `src/QuietValley.Game/UI`: game UI renderer, menus, HUD, toast/dialogue rendering, and pixel font
 
 ## Generated Assets
 
-The project currently includes original generated PNG assets in `src/PixelHomestead.Game/Assets/Generated`. These are checked in so the game runs immediately without requiring an asset-generation step.
+The project currently includes original generated PNG assets in `src/QuietValley.Game/Assets/Generated`. These are checked in so the game runs immediately without requiring an asset-generation step.
 
 ```bash
 python3 scripts/generate_assets.py
@@ -127,17 +127,17 @@ Build outputs, packaged releases, coverage reports, and temporary atlas-cleaning
 
 Packaged builds are published on GitHub Releases when available:
 
-- macOS: download the `.dmg`, open it, and run `PixelHomestead.Game`.
-- Windows: download the `PixelHomestead-win-x64.zip`, extract it, and run `PixelHomestead.Game.exe`.
+- macOS: download the `.dmg`, open it, and run `QuietValley.Game`.
+- Windows: download the `QuietValley-win-x64.zip`, extract it, and run `QuietValley.Game.exe`.
 
 ## Save Location
 
-Saves are written to the current user's application data folder under `PixelHomestead/savegame.json`. Settings are written under `PixelHomestead/settings.json`.
+Saves are written to the current user's application data folder under `QuietValley/savegame.json`. Settings are written under `QuietValley/settings.json`.
 Save and settings writes use a temporary file followed by an atomic replace so an interrupted write is less likely to corrupt the active file.
 
 ## License
 
-Pixel Homestead is open source under the [MIT License](LICENSE).
+QuietValley is open source under the [MIT License](LICENSE).
 
 ## QA Status
 

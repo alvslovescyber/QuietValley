@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <ApplicationIcon />
+    <RollForward>Major</RollForward>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MonoGame.Framework.DesktopGL" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\QuietValley.Core\QuietValley.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Data\*.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="Assets\Generated\icons.png" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="Assets\Generated\interior_town.png" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="Assets\Generated\menu_background_ai_source.png" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="Assets\Generated\player.png" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="Assets\Generated\props.png" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="Assets\Generated\terrain.png" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="Assets\Generated\ui.png" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

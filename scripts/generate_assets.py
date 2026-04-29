@@ -5,7 +5,7 @@ from pathlib import Path
 from PIL import Image, ImageDraw
 
 ROOT = Path(__file__).resolve().parents[1]
-OUT = ROOT / "src" / "PixelHomestead.Game" / "Assets" / "Generated"
+OUT = ROOT / "src" / "QuietValley.Game" / "Assets" / "Generated"
 OUT.mkdir(parents=True, exist_ok=True)
 
 

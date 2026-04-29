@@ -5,8 +5,8 @@
 ## Validation
 
 - [ ] `dotnet csharpier check .`
-- [ ] `dotnet build src/PixelHomestead.Game/PixelHomestead.Game.csproj`
-- [ ] `dotnet test tests/PixelHomestead.SmokeTests/PixelHomestead.SmokeTests.csproj`
+- [ ] `dotnet build src/QuietValley.Game/QuietValley.Game.csproj`
+- [ ] `dotnet test tests/QuietValley.SmokeTests/QuietValley.SmokeTests.csproj`
 
 ## Notes
 

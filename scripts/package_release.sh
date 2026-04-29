@@ -2,15 +2,15 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-PROJECT="$ROOT/src/PixelHomestead.Game/PixelHomestead.Game.csproj"
-TEST_PROJECT="$ROOT/tests/PixelHomestead.SmokeTests/PixelHomestead.SmokeTests.csproj"
+PROJECT="$ROOT/src/QuietValley.Game/QuietValley.Game.csproj"
+TEST_PROJECT="$ROOT/tests/QuietValley.SmokeTests/QuietValley.SmokeTests.csproj"
 PUBLISH_DIR="$ROOT/artifacts/publish"
 RELEASE_DIR="$ROOT/artifacts/release"
 
 cd "$ROOT"
 
 dotnet tool restore
-dotnet restore PixelHomestead.sln
+dotnet restore QuietValley.sln
 dotnet csharpier check .
 dotnet build "$PROJECT" --configuration Release --no-restore
 dotnet test "$TEST_PROJECT" --configuration Release --no-restore --collect:"XPlat Code Coverage" --logger trx
@@ -37,13 +37,13 @@ for runtime in osx-arm64 osx-x64 win-x64; do
 done
 
 for runtime in osx-arm64 osx-x64; do
-    zip_name="PixelHomestead-$runtime.zip"
+    zip_name="QuietValley-$runtime.zip"
     (cd "$PUBLISH_DIR" && zip -qr "$RELEASE_DIR/$zip_name" "$runtime")
 
     if command -v hdiutil >/dev/null 2>&1; then
-        dmg_name="PixelHomestead-$runtime.dmg"
+        dmg_name="QuietValley-$runtime.dmg"
         hdiutil create \
-            -volname "Pixel Homestead" \
+            -volname "QuietValley" \
             -srcfolder "$PUBLISH_DIR/$runtime" \
             -ov \
             -format UDZO \
@@ -51,7 +51,7 @@ for runtime in osx-arm64 osx-x64; do
     fi
 done
 
-(cd "$PUBLISH_DIR" && zip -qr "$RELEASE_DIR/PixelHomestead-win-x64.zip" "win-x64")
+(cd "$PUBLISH_DIR" && zip -qr "$RELEASE_DIR/QuietValley-win-x64.zip" "win-x64")
 
 shasum -a 256 "$RELEASE_DIR"/* > "$RELEASE_DIR/SHA256SUMS.txt"
 ls -lh "$RELEASE_DIR"

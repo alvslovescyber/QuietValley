@@ -29,7 +29,7 @@ jobs:
       - name: Upload packaged artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: pixel-homestead-release
+          name: quietvalley-release
           path: |
             artifacts/release/*.dmg
             artifacts/release/*.zip
@@ -44,5 +44,5 @@ jobs:
             artifacts/release/*.dmg \
             artifacts/release/*.zip \
             artifacts/release/SHA256SUMS.txt \
-            --title "Pixel Homestead ${GITHUB_REF_NAME}" \
-            --notes "Self-contained Pixel Homestead builds for macOS and Windows. macOS users can install from the DMG; Windows users should download the win-x64 ZIP and run PixelHomestead.Game.exe inside it."
+            --title "QuietValley ${GITHUB_REF_NAME}" \
+            --notes "Self-contained QuietValley builds for macOS and Windows. macOS users can install from the DMG; Windows users should download the win-x64 ZIP and run QuietValley.Game.exe inside it."

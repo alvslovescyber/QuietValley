@@ -2,13 +2,13 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Run Pixel Homestead",
+      "name": "Run QuietValley",
       "type": "coreclr",
       "request": "launch",
       "preLaunchTask": "build game",
-      "program": "${workspaceFolder}/src/PixelHomestead.Game/bin/Debug/net9.0/PixelHomestead.Game.dll",
+      "program": "${workspaceFolder}/src/QuietValley.Game/bin/Debug/net9.0/QuietValley.Game.dll",
       "args": [],
-      "cwd": "${workspaceFolder}/src/PixelHomestead.Game/bin/Debug/net9.0",
+      "cwd": "${workspaceFolder}/src/QuietValley.Game/bin/Debug/net9.0",
       "console": "internalConsole",
       "stopAtEntry": false
     },
@@ -20,7 +20,7 @@
       "program": "dotnet",
       "args": [
         "test",
-        "${workspaceFolder}/tests/PixelHomestead.SmokeTests/PixelHomestead.SmokeTests.csproj"
+        "${workspaceFolder}/tests/QuietValley.SmokeTests/QuietValley.SmokeTests.csproj"
       ],
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal"
