@@ -107,13 +107,13 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
         if (_screen == GameScreen.Playing)
         {
             UpdatePlaying(deltaSeconds);
+            UpdateFishing(deltaSeconds);
         }
         else
         {
             UpdateMenus();
         }
 
-        UpdateFishing(deltaSeconds);
         _particles.Update(deltaSeconds);
         base.Update(gameTime);
     }
@@ -626,7 +626,9 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
     {
         GridPosition target = _player.InteractionTarget();
         InventorySlot selectedSlot = state.Inventory[state.Player.SelectedHotbarIndex];
-        ItemDefinition? selectedItem = selectedSlot.ItemId is null ? null : state.Content.Items[selectedSlot.ItemId];
+        ItemDefinition? selectedItem = selectedSlot.ItemId is null
+            ? null
+            : state.Content.Items.GetValueOrDefault(selectedSlot.ItemId);
         if (IsHouseEntryTarget(target))
         {
             return "Press E to Enter Home";
@@ -720,7 +722,7 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
         InventorySlot slot = state.Inventory[state.Player.SelectedHotbarIndex];
         return slot.ItemId is null
             ? "Empty slot selected."
-            : $"{state.Content.Items[slot.ItemId].DisplayName} selected.";
+            : $"{state.Content.Items.GetValueOrDefault(slot.ItemId)?.DisplayName ?? slot.ItemId} selected.";
     }
 
     private bool CanSprint(GameState state, Vector2 movement, float deltaSeconds)

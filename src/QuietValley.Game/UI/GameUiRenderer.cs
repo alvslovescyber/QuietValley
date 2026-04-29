@@ -58,7 +58,7 @@ public sealed class GameUiRenderer(Texture2D pixel, PixelFont font, ArtAssets ar
         InventorySlot selected = state.Inventory[state.Player.SelectedHotbarIndex];
         string selectedText = selected.ItemId is null
             ? "Empty hands"
-            : state.Content.Items[selected.ItemId].DisplayName;
+            : state.Content.Items.GetValueOrDefault(selected.ItemId)?.DisplayName ?? selected.ItemId;
         DrawPanel(spriteBatch, new Rectangle(12, 320, 156, 24), PanelStyle.Compact);
         font.Draw(spriteBatch, selectedText, new Vector2(24, 329), Palette.Text, 1);
     }

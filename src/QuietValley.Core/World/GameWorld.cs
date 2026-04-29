@@ -126,10 +126,9 @@ public sealed class GameWorld
             for (int tileX = 0; tileX < world.Width; tileX++)
             {
                 GridPosition position = new(tileX, tileY);
-                bool borderForest = false;
                 bool upperForestPatch = tileY <= 6 && tileX is > 20 and < 53 && (tileX + tileY) % 3 != 0;
                 bool lowerForestPatch = tileY >= 32 && tileX is > 27 and < 56 && (tileX + tileY) % 4 != 1;
-                if (borderForest || upperForestPatch || lowerForestPatch)
+                if (upperForestPatch || lowerForestPatch)
                 {
                     world.SetTile(position, TileType.Tree);
                 }

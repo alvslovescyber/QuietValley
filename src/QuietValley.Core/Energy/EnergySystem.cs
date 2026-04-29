@@ -36,17 +36,4 @@ public sealed class EnergySystem
     {
         CurrentEnergy = Math.Clamp(currentEnergy, 0, MaximumEnergy);
     }
-
-    public void SetMaximum(int maximumEnergy)
-    {
-        if (maximumEnergy < 1)
-        {
-            throw new ArgumentOutOfRangeException(nameof(maximumEnergy), "Maximum energy must be at least 1.");
-        }
-
-        if (CurrentEnergy > maximumEnergy)
-        {
-            CurrentEnergy = maximumEnergy;
-        }
-    }
 }
