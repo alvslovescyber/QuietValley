@@ -9,11 +9,12 @@ namespace QuietValley.Game.UI;
 
 public sealed class GameUiRenderer(Texture2D pixel, PixelFont font, ArtAssets art)
 {
-    public static readonly Rectangle NewGameButton = new(70, 278, 96, 34);
-    public static readonly Rectangle LoadGameButton = new(184, 278, 96, 34);
-    public static readonly Rectangle SettingsButton = new(298, 278, 96, 34);
-    public static readonly Rectangle CreditsButton = new(412, 278, 96, 34);
-    public static readonly Rectangle QuitButton = new(526, 278, 84, 34);
+    // 5 equal-width buttons, 9px margins, 8px gaps: 9 + 5×118 + 4×8 + 9 = 640
+    public static readonly Rectangle NewGameButton = new(9, 278, 118, 34);
+    public static readonly Rectangle LoadGameButton = new(135, 278, 118, 34);
+    public static readonly Rectangle SettingsButton = new(261, 278, 118, 34);
+    public static readonly Rectangle CreditsButton = new(387, 278, 118, 34);
+    public static readonly Rectangle QuitButton = new(513, 278, 118, 34);
     public static readonly Rectangle ExitHomeButton = new(488, 306, 112, 26);
     public static readonly Rectangle SleepHomeButton = new(368, 306, 104, 26);
     public static readonly Rectangle ShopCloseButton = new(260, 263, 120, 22);
