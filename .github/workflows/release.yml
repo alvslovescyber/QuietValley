@@ -9,10 +9,16 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   package:
     name: Package Release
     runs-on: macos-latest
+    env:
+      HAS_CERT: ${{ secrets.MACOS_CERTIFICATE_P12_BASE64 != '' }}
 
     steps:
       - name: Checkout
@@ -24,7 +30,7 @@ jobs:
           dotnet-version: 10.0.x
 
       - name: Import Apple signing certificate
-        if: ${{ secrets.MACOS_CERTIFICATE_P12_BASE64 != '' }}
+        if: env.HAS_CERT == 'true'
         env:
           MACOS_CERTIFICATE_P12_BASE64: ${{ secrets.MACOS_CERTIFICATE_P12_BASE64 }}
           MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
@@ -66,6 +72,7 @@ jobs:
             artifacts/release/*.dmg
             artifacts/release/*.zip
             artifacts/release/SHA256SUMS.txt
+          if-no-files-found: error
 
       - name: Publish GitHub release
         if: startsWith(github.ref, 'refs/tags/')
@@ -77,4 +84,4 @@ jobs:
             artifacts/release/*.zip \
             artifacts/release/SHA256SUMS.txt \
             --title "QuietValley ${GITHUB_REF_NAME}" \
-            --notes "Self-contained QuietValley builds for macOS and Windows. macOS: download the osx-arm64 or osx-x64 ZIP, unzip it, and run QuietValley.app directly (recommended) — or open the DMG, drag QuietValley.app to Applications, and eject the disk. The DMG mounts as a virtual disk; this is normal macOS behaviour for disk images. Windows: download the win-x64 ZIP, open the win-x64 folder, and run QuietValley.Game.exe."
+            --notes "Self-contained QuietValley builds for macOS and Windows. macOS: download the osx-arm64 or osx-x64 ZIP, unzip it, and run QuietValley.app directly (recommended) — or open the DMG, drag QuietValley.app to Applications, and eject the disk. The DMG mounts as a virtual disk; this is normal macOS behavior for disk images. Windows: download the win-x64 ZIP, open the win-x64 folder, and run QuietValley.Game.exe."

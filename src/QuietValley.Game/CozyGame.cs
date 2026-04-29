@@ -52,6 +52,8 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
     private float _biteWindowTimer;
     private bool _fishBiting;
     private GridPosition _fishingTarget;
+    private string _newFarmName = "";
+    private FarmSaveInfo[] _farmList = [];
 
     private const float MaximumOxygenSeconds = 8f;
     private const float BiteWindowSeconds = 5f;
@@ -96,9 +98,8 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
 
         string dataDirectory = Path.Combine(AppContext.BaseDirectory, "Data");
         _content = ContentDatabase.Load(dataDirectory);
-        _saveManager = new SaveManager();
         _state = new GameState(_content);
-        ResetPlayerFromState();
+        Window.TextInput += OnTextInput;
     }
 
     protected override void UnloadContent()
@@ -155,6 +156,12 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
                 break;
             case GameScreen.HomeInterior:
                 RequireUi().DrawHomeInterior(_spriteBatch, mouse);
+                break;
+            case GameScreen.FarmSelect:
+                RequireUi().DrawFarmSelect(_spriteBatch, _farmList, mouse);
+                break;
+            case GameScreen.NewFarm:
+                RequireUi().DrawNewFarm(_spriteBatch, _newFarmName, mouse);
                 break;
             default:
                 DrawGameplay(_spriteBatch);
@@ -239,11 +246,15 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
         {
             if (Clicked(mouse, GameUiRenderer.NewGameButton))
             {
-                StartNewGame();
+                _newFarmName = "";
+                _screen = GameScreen.NewFarm;
+                _audio.PlaySfx("menu_open");
             }
             else if (Clicked(mouse, GameUiRenderer.LoadGameButton))
             {
-                LoadGame();
+                _farmList = SaveManager.ListFarms();
+                _screen = GameScreen.FarmSelect;
+                _audio.PlaySfx("menu_open");
             }
             else if (Clicked(mouse, GameUiRenderer.SettingsButton))
             {
@@ -294,6 +305,38 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
                 _screen = GameScreen.Playing;
                 _draggedInventorySlotIndex = null;
                 _audio.PlaySfx("inventory_close");
+            }
+        }
+        else if (_screen == GameScreen.FarmSelect)
+        {
+            if (_bindings.CancelPressed(_input) || Clicked(mouse, GameUiRenderer.FarmSelectBackButton))
+            {
+                _screen = GameScreen.MainMenu;
+                _audio.PlaySfx("menu_close");
+            }
+            else
+            {
+                for (int i = 0; i < Math.Min(_farmList.Length, 4); i++)
+                {
+                    if (Clicked(mouse, GameUiRenderer.FarmLoadButton(i)))
+                    {
+                        _saveManager = new SaveManager(_farmList[i].FarmName);
+                        LoadGame();
+                        break;
+                    }
+                }
+            }
+        }
+        else if (_screen == GameScreen.NewFarm)
+        {
+            if (_bindings.CancelPressed(_input) || Clicked(mouse, GameUiRenderer.NewFarmCancelButton))
+            {
+                _screen = GameScreen.MainMenu;
+                _audio.PlaySfx("menu_close");
+            }
+            else if (_input.Pressed(Keys.Enter) || Clicked(mouse, GameUiRenderer.NewFarmCreateButton))
+            {
+                ConfirmNewFarm();
             }
         }
         else if (_screen == GameScreen.Settings)
@@ -884,10 +927,32 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
     {
         _audio.SetMusicVolume(_settings.MusicVolume);
         _audio.SetSfxVolume(_settings.SfxVolume);
-        _graphics.PreferredBackBufferWidth = GameConstants.VirtualWidth * _settings.WindowScale;
-        _graphics.PreferredBackBufferHeight = GameConstants.VirtualHeight * _settings.WindowScale;
+        if (_settings.Fullscreen)
+        {
+            DisplayMode mode = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode;
+            _graphics.PreferredBackBufferWidth = mode.Width;
+            _graphics.PreferredBackBufferHeight = mode.Height;
+        }
+        else
+        {
+            _graphics.PreferredBackBufferWidth = GameConstants.VirtualWidth * _settings.WindowScale;
+            _graphics.PreferredBackBufferHeight = GameConstants.VirtualHeight * _settings.WindowScale;
+        }
+
         _graphics.IsFullScreen = _settings.Fullscreen;
         _graphics.ApplyChanges();
+    }
+
+    private void ConfirmNewFarm()
+    {
+        string trimmed = _newFarmName.Trim();
+        if (string.IsNullOrWhiteSpace(trimmed))
+        {
+            return;
+        }
+
+        _saveManager = new SaveManager(trimmed);
+        StartNewGame();
     }
 
     private void StartNewGame()
@@ -902,6 +967,26 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
         _state = RequireSaveManager().Load(RequireContent());
         ResetPlayerFromState();
         _screen = GameScreen.Playing;
+    }
+
+    private void OnTextInput(object? sender, TextInputEventArgs e)
+    {
+        if (_screen != GameScreen.NewFarm)
+        {
+            return;
+        }
+
+        if (e.Character == '\b')
+        {
+            if (_newFarmName.Length > 0)
+            {
+                _newFarmName = _newFarmName[..^1];
+            }
+        }
+        else if (e.Character >= ' ' && _newFarmName.Length < 24)
+        {
+            _newFarmName += e.Character;
+        }
     }
 
     private void ResetPlayerFromState()
@@ -1029,20 +1114,15 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
 
     private Rectangle GetScaledDestination()
     {
-        int scale = Math.Max(
-            1,
-            Math.Min(
-                _settings.WindowScale,
-                Math.Min(
-                    GraphicsDevice.PresentationParameters.BackBufferWidth / GameConstants.VirtualWidth,
-                    GraphicsDevice.PresentationParameters.BackBufferHeight / GameConstants.VirtualHeight
-                )
-            )
-        );
+        int bbWidth = GraphicsDevice.PresentationParameters.BackBufferWidth;
+        int bbHeight = GraphicsDevice.PresentationParameters.BackBufferHeight;
+        int maxFromBuffer = Math.Min(bbWidth / GameConstants.VirtualWidth, bbHeight / GameConstants.VirtualHeight);
+        int maxScale = _settings.Fullscreen ? maxFromBuffer : _settings.WindowScale;
+        int scale = Math.Max(1, Math.Min(maxScale, maxFromBuffer));
         int width = GameConstants.VirtualWidth * scale;
         int height = GameConstants.VirtualHeight * scale;
-        int x = (GraphicsDevice.PresentationParameters.BackBufferWidth - width) / 2;
-        int y = (GraphicsDevice.PresentationParameters.BackBufferHeight - height) / 2;
+        int x = (bbWidth - width) / 2;
+        int y = (bbHeight - height) / 2;
         return new Rectangle(x, y, width, height);
     }
 

@@ -2,6 +2,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using QuietValley.Core.Energy;
 using QuietValley.Core.Items;
+using QuietValley.Core.Saving;
 using QuietValley.Core.Systems;
 using QuietValley.Game.Rendering;
 
@@ -18,8 +19,72 @@ public sealed class GameUiRenderer(Texture2D pixel, PixelFont font, ArtAssets ar
     public static readonly Rectangle ExitHomeButton = new(488, 306, 112, 26);
     public static readonly Rectangle SleepHomeButton = new(368, 306, 104, 26);
     public static readonly Rectangle ShopCloseButton = new(260, 263, 120, 22);
+    public static readonly Rectangle FarmSelectBackButton = new(248, 290, 144, 26);
+    public static readonly Rectangle NewFarmCreateButton = new(186, 216, 120, 26);
+    public static readonly Rectangle NewFarmCancelButton = new(314, 216, 120, 26);
 
     public static Rectangle ShopItemBuyButton(int index) => new(448, 106 + index * 38, 68, 20);
+
+    public static Rectangle FarmLoadButton(int index) => new(456, 100 + index * 44, 80, 24);
+
+    public void DrawFarmSelect(SpriteBatch spriteBatch, FarmSaveInfo[] farms, Point mouse)
+    {
+        DrawTitleScene(spriteBatch);
+        DrawOverlay(spriteBatch);
+        Rectangle panel = new(80, 50, 480, 252);
+        DrawPanel(spriteBatch, panel, PanelStyle.Parchment);
+        DrawTinyFlower(spriteBatch, 100, 70);
+        font.Draw(spriteBatch, "Your Farms", new Vector2(122, 68), Palette.Text, 2);
+
+        if (farms.Length == 0)
+        {
+            font.Draw(spriteBatch, "No saved farms yet.", new Vector2(212, 148), Palette.TextLight, 1);
+            font.Draw(
+                spriteBatch,
+                "Create a new farm from the main menu.",
+                new Vector2(140, 168),
+                Palette.TextLight,
+                1
+            );
+        }
+        else
+        {
+            for (int i = 0; i < Math.Min(farms.Length, 4); i++)
+            {
+                int rowY = 100 + i * 44;
+                FarmSaveInfo farm = farms[i];
+                font.Draw(spriteBatch, farm.FarmName, new Vector2(104, rowY + 4), Palette.Text, 1);
+                font.Draw(
+                    spriteBatch,
+                    farm.LastSaved.ToString("MMM d, yyyy"),
+                    new Vector2(104, rowY + 20),
+                    Palette.TextLight,
+                    1
+                );
+                DrawButton(spriteBatch, FarmLoadButton(i), "Load", mouse);
+            }
+        }
+
+        DrawButton(spriteBatch, FarmSelectBackButton, "Back", mouse);
+    }
+
+    public void DrawNewFarm(SpriteBatch spriteBatch, string farmName, Point mouse)
+    {
+        DrawTitleScene(spriteBatch);
+        DrawOverlay(spriteBatch);
+        Rectangle panel = new(160, 92, 320, 176);
+        DrawPanel(spriteBatch, panel, PanelStyle.Parchment);
+        DrawTinyFlower(spriteBatch, 180, 110);
+        font.Draw(spriteBatch, "New Farm", new Vector2(202, 108), Palette.Text, 2);
+        font.Draw(spriteBatch, "Farm Name:", new Vector2(180, 152), Palette.Text, 1);
+        Rectangle textBox = new(172, 162, 296, 26);
+        DrawPanel(spriteBatch, textBox, PanelStyle.Compact);
+        string display = farmName.Length > 0 ? farmName + "_" : "_";
+        font.Draw(spriteBatch, display, new Vector2(180, 170), Palette.Text, 1);
+        DrawButton(spriteBatch, NewFarmCreateButton, "Create Farm", mouse);
+        DrawButton(spriteBatch, NewFarmCancelButton, "Cancel", mouse);
+        font.Draw(spriteBatch, "Type a name, then press Enter.", new Vector2(186, 248), Palette.TextLight, 1);
+    }
 
     public void DrawMainMenu(SpriteBatch spriteBatch, Point mouse)
     {
