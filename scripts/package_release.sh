@@ -125,18 +125,38 @@ PLIST
     (cd "$bundle_root" && zip -qry "$RELEASE_DIR/QuietValley-$runtime.zip" "$MAC_APP_NAME.app")
 
     if command -v hdiutil >/dev/null 2>&1; then
-        local dmg_stage
-        dmg_stage="$(mktemp -d "${TMPDIR:-/tmp}/quietvalley-$runtime-dmg.XXXXXX")"
-        cp -R "$app_path" "$dmg_stage/"
-        ln -s /Applications "$dmg_stage/Applications"
+        local dmg_rw dmg_out size_mb dev
+        dmg_rw="$RELEASE_DIR/QuietValley-$runtime-rw.dmg"
+        dmg_out="$RELEASE_DIR/QuietValley-$runtime.dmg"
+        size_mb=$(( $(du -sm "$app_path" | awk '{print $1}') + 32 ))
+
+        # Create a writable intermediate image
         hdiutil create \
+            -megabytes "$size_mb" \
             -volname "$MAC_APP_NAME" \
-            -srcfolder "$dmg_stage" \
+            -fs HFS+ \
+            -format UDRW \
             -ov \
+            -o "${dmg_rw%.dmg}"
+
+        # Mount, copy app + Applications symlink, then unmount cleanly
+        dev="$(hdiutil attach "$dmg_rw" -readwrite -noverify -nobrowse \
+                | grep '/Volumes/' | awk '{print $NF}')"
+        [[ -n "$dev" ]] || { echo "ERROR: hdiutil attach produced no mount point for $dmg_rw" >&2; exit 1; }
+        cp -R "$app_path" "$dev/"
+        ln -s /Applications "$dev/Applications"
+        hdiutil detach "$dev" -quiet
+
+        # Convert to compressed read-only and verify integrity
+        hdiutil convert "$dmg_rw" \
             -format UDZO \
-            "$RELEASE_DIR/QuietValley-$runtime.dmg" >/dev/null
-        rm -rf "$dmg_stage"
-        notarize_dmg_if_configured "$RELEASE_DIR/QuietValley-$runtime.dmg"
+            -imagekey zlib-level=9 \
+            -o "${dmg_out%.dmg}" \
+            -ov
+        rm -f "$dmg_rw"
+
+        hdiutil verify "$dmg_out"
+        notarize_dmg_if_configured "$dmg_out"
     fi
 }
 
@@ -171,5 +191,5 @@ done
 
 (cd "$PUBLISH_DIR" && zip -qr "$RELEASE_DIR/QuietValley-win-x64.zip" "win-x64")
 
-shasum -a 256 "$RELEASE_DIR"/* > "$RELEASE_DIR/SHA256SUMS.txt"
+(cd "$RELEASE_DIR" && shasum -a 256 -- * > SHA256SUMS.txt)
 ls -lh "$RELEASE_DIR"

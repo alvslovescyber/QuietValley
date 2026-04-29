@@ -84,4 +84,4 @@ jobs:
             artifacts/release/*.zip \
             artifacts/release/SHA256SUMS.txt \
             --title "QuietValley ${GITHUB_REF_NAME}" \
-            --notes "Self-contained QuietValley builds for macOS and Windows. macOS: download the osx-arm64 or osx-x64 ZIP, unzip it, and run QuietValley.app directly (recommended) — or open the DMG, drag QuietValley.app to Applications, and eject the disk. The DMG mounts as a virtual disk; this is normal macOS behavior for disk images. Windows: download the win-x64 ZIP, open the win-x64 folder, and run QuietValley.Game.exe."
+            --notes-file .github/release-notes.md
