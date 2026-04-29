@@ -21,7 +21,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 9.0.x
+          dotnet-version: 10.0.x
 
       - name: Import Apple signing certificate
         if: ${{ secrets.MACOS_CERTIFICATE_P12_BASE64 != '' }}
@@ -77,4 +77,4 @@ jobs:
             artifacts/release/*.zip \
             artifacts/release/SHA256SUMS.txt \
             --title "QuietValley ${GITHUB_REF_NAME}" \
-            --notes "Self-contained QuietValley builds for macOS and Windows. macOS users should open the DMG, drag QuietValley.app to Applications, then open the app. Windows users should download the win-x64 ZIP and run QuietValley.Game.exe inside it."
+            --notes "Self-contained QuietValley builds for macOS and Windows. macOS: download the osx-arm64 or osx-x64 ZIP, unzip it, and run QuietValley.app directly (recommended) — or open the DMG, drag QuietValley.app to Applications, and eject the disk. The DMG mounts as a virtual disk; this is normal macOS behaviour for disk images. Windows: download the win-x64 ZIP, open the win-x64 folder, and run QuietValley.Game.exe."
