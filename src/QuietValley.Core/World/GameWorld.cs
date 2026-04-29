@@ -126,10 +126,9 @@ public sealed class GameWorld
             for (int tileX = 0; tileX < world.Width; tileX++)
             {
                 GridPosition position = new(tileX, tileY);
-                bool borderForest = false;
                 bool upperForestPatch = tileY <= 6 && tileX is > 20 and < 53 && (tileX + tileY) % 3 != 0;
                 bool lowerForestPatch = tileY >= 32 && tileX is > 27 and < 56 && (tileX + tileY) % 4 != 1;
-                if (borderForest || upperForestPatch || lowerForestPatch)
+                if (upperForestPatch || lowerForestPatch)
                 {
                     world.SetTile(position, TileType.Tree);
                 }
@@ -399,6 +398,27 @@ public sealed class GameWorld
         if (hasPond && pondDeltaX * pondDeltaX + pondDeltaY * pondDeltaY <= pondRadius * pondRadius)
         {
             return new Tile { Type = TileType.Water };
+        }
+
+        bool hasVillage = !hasPond && (chunkHash >> 8) % 8 == 0;
+        if (hasVillage)
+        {
+            int houseX = 1 + (int)((chunkHash >> 4) % 8);
+            int houseY = 1 + (int)((chunkHash >> 10) % 6);
+            int houseW = 4 + (int)((chunkHash >> 16) % 4);
+            int houseH = 3 + (int)((chunkHash >> 20) % 3);
+            if (localX >= houseX && localX <= houseX + houseW && localY >= houseY && localY <= houseY + houseH)
+            {
+                return new Tile { Type = TileType.TownHouse };
+            }
+
+            int pathY = houseY + houseH + 1;
+            if (localY == pathY && pathY < 16)
+            {
+                return new Tile { Type = TileType.Path };
+            }
+
+            return new Tile { Type = TileType.Grass };
         }
 
         uint tileHash = Hash(position.X, position.Y);

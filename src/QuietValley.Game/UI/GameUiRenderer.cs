@@ -2,6 +2,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using QuietValley.Core.Energy;
 using QuietValley.Core.Items;
+using QuietValley.Core.Saving;
 using QuietValley.Core.Systems;
 using QuietValley.Game.Rendering;
 
@@ -9,13 +10,81 @@ namespace QuietValley.Game.UI;
 
 public sealed class GameUiRenderer(Texture2D pixel, PixelFont font, ArtAssets art)
 {
-    public static readonly Rectangle NewGameButton = new(70, 278, 96, 34);
-    public static readonly Rectangle LoadGameButton = new(184, 278, 96, 34);
-    public static readonly Rectangle SettingsButton = new(298, 278, 96, 34);
-    public static readonly Rectangle CreditsButton = new(412, 278, 96, 34);
-    public static readonly Rectangle QuitButton = new(526, 278, 84, 34);
+    // 5 equal-width buttons, 9px margins, 8px gaps: 9 + 5×118 + 4×8 + 9 = 640
+    public static readonly Rectangle NewGameButton = new(9, 278, 118, 34);
+    public static readonly Rectangle LoadGameButton = new(135, 278, 118, 34);
+    public static readonly Rectangle SettingsButton = new(261, 278, 118, 34);
+    public static readonly Rectangle CreditsButton = new(387, 278, 118, 34);
+    public static readonly Rectangle QuitButton = new(513, 278, 118, 34);
     public static readonly Rectangle ExitHomeButton = new(488, 306, 112, 26);
     public static readonly Rectangle SleepHomeButton = new(368, 306, 104, 26);
+    public static readonly Rectangle ShopCloseButton = new(260, 263, 120, 22);
+    public static readonly Rectangle FarmSelectBackButton = new(248, 290, 144, 26);
+    public static readonly Rectangle NewFarmCreateButton = new(186, 216, 120, 26);
+    public static readonly Rectangle NewFarmCancelButton = new(314, 216, 120, 26);
+
+    public static Rectangle ShopItemBuyButton(int index) => new(448, 106 + index * 38, 68, 20);
+
+    public static Rectangle FarmLoadButton(int index) => new(456, 100 + index * 44, 80, 24);
+
+    public void DrawFarmSelect(SpriteBatch spriteBatch, FarmSaveInfo[] farms, Point mouse)
+    {
+        DrawTitleScene(spriteBatch);
+        DrawOverlay(spriteBatch);
+        Rectangle panel = new(80, 50, 480, 252);
+        DrawPanel(spriteBatch, panel, PanelStyle.Parchment);
+        DrawTinyFlower(spriteBatch, 100, 70);
+        font.Draw(spriteBatch, "Your Farms", new Vector2(122, 68), Palette.Text, 2);
+
+        if (farms.Length == 0)
+        {
+            font.Draw(spriteBatch, "No saved farms yet.", new Vector2(212, 148), Palette.TextLight, 1);
+            font.Draw(
+                spriteBatch,
+                "Create a new farm from the main menu.",
+                new Vector2(140, 168),
+                Palette.TextLight,
+                1
+            );
+        }
+        else
+        {
+            for (int i = 0; i < Math.Min(farms.Length, 4); i++)
+            {
+                int rowY = 100 + i * 44;
+                FarmSaveInfo farm = farms[i];
+                font.Draw(spriteBatch, farm.FarmName, new Vector2(104, rowY + 4), Palette.Text, 1);
+                font.Draw(
+                    spriteBatch,
+                    farm.LastSaved.ToString("MMM d, yyyy"),
+                    new Vector2(104, rowY + 20),
+                    Palette.TextLight,
+                    1
+                );
+                DrawButton(spriteBatch, FarmLoadButton(i), "Load", mouse);
+            }
+        }
+
+        DrawButton(spriteBatch, FarmSelectBackButton, "Back", mouse);
+    }
+
+    public void DrawNewFarm(SpriteBatch spriteBatch, string farmName, Point mouse)
+    {
+        DrawTitleScene(spriteBatch);
+        DrawOverlay(spriteBatch);
+        Rectangle panel = new(160, 92, 320, 176);
+        DrawPanel(spriteBatch, panel, PanelStyle.Parchment);
+        DrawTinyFlower(spriteBatch, 180, 110);
+        font.Draw(spriteBatch, "New Farm", new Vector2(202, 108), Palette.Text, 2);
+        font.Draw(spriteBatch, "Farm Name:", new Vector2(180, 152), Palette.Text, 1);
+        Rectangle textBox = new(172, 162, 296, 26);
+        DrawPanel(spriteBatch, textBox, PanelStyle.Compact);
+        string display = farmName.Length > 0 ? farmName + "_" : "_";
+        font.Draw(spriteBatch, display, new Vector2(180, 170), Palette.Text, 1);
+        DrawButton(spriteBatch, NewFarmCreateButton, "Create Farm", mouse);
+        DrawButton(spriteBatch, NewFarmCancelButton, "Cancel", mouse);
+        font.Draw(spriteBatch, "Type a name, then press Enter.", new Vector2(186, 248), Palette.TextLight, 1);
+    }
 
     public void DrawMainMenu(SpriteBatch spriteBatch, Point mouse)
     {
@@ -58,7 +127,7 @@ public sealed class GameUiRenderer(Texture2D pixel, PixelFont font, ArtAssets ar
         InventorySlot selected = state.Inventory[state.Player.SelectedHotbarIndex];
         string selectedText = selected.ItemId is null
             ? "Empty hands"
-            : state.Content.Items[selected.ItemId].DisplayName;
+            : state.Content.Items.GetValueOrDefault(selected.ItemId)?.DisplayName ?? selected.ItemId;
         DrawPanel(spriteBatch, new Rectangle(12, 320, 156, 24), PanelStyle.Compact);
         font.Draw(spriteBatch, selectedText, new Vector2(24, 329), Palette.Text, 1);
     }
@@ -86,6 +155,40 @@ public sealed class GameUiRenderer(Texture2D pixel, PixelFont font, ArtAssets ar
         DrawButton(spriteBatch, SleepHomeButton, "Sleep", mouse);
         DrawButton(spriteBatch, ExitHomeButton, "Exit Home", mouse);
         font.Draw(spriteBatch, "Press E or Esc to leave.", new Vector2(68, 316), Palette.TextLight, 1);
+    }
+
+    public void DrawShop(SpriteBatch spriteBatch, GameState state, Point mouse, ShopEntry[] catalogue)
+    {
+        DrawOverlay(spriteBatch);
+        Rectangle panel = new(100, 56, 440, 240);
+        DrawPanel(spriteBatch, panel, PanelStyle.Parchment);
+        DrawTinyFlower(spriteBatch, 120, 75);
+        font.Draw(spriteBatch, "Seed Shop", new Vector2(140, 72), Palette.Text, 2);
+        DrawCoin(spriteBatch, 488, 80);
+        font.Draw(spriteBatch, $"{state.Economy.Coins}G", new Vector2(502, 80), Palette.Text, 1);
+
+        for (int i = 0; i < catalogue.Length; i++)
+        {
+            int y = 106 + i * 38;
+            ShopEntry entry = catalogue[i];
+            ItemDefinition? item = state.Content.Items.GetValueOrDefault(entry.ItemId);
+            if (item is not null)
+            {
+                DrawItemIcon(spriteBatch, item, new Rectangle(116, y, 20, 20));
+            }
+
+            font.Draw(spriteBatch, entry.DisplayName, new Vector2(142, y + 3), Palette.Text, 1);
+            DrawCoin(spriteBatch, 142, y + 18);
+            font.Draw(spriteBatch, $"{entry.Price}G", new Vector2(156, y + 18), Palette.TextLight, 1);
+            DrawButton(spriteBatch, ShopItemBuyButton(i), "Buy", mouse);
+            if (state.Economy.Coins < entry.Price)
+            {
+                spriteBatch.Draw(pixel, ShopItemBuyButton(i), new Color(0, 0, 0, 80));
+            }
+        }
+
+        DrawButton(spriteBatch, ShopCloseButton, "Close", mouse);
+        font.Draw(spriteBatch, "Esc to close.", new Vector2(390, 267), Palette.TextLight, 1);
     }
 
     public void DrawHotbar(SpriteBatch spriteBatch, GameState state, Point mouse)
@@ -681,3 +784,5 @@ public enum PanelStyle
     Compact,
     Parchment,
 }
+
+public readonly record struct ShopEntry(string ItemId, string DisplayName, int Price);

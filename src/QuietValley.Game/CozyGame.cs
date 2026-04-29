@@ -49,10 +49,22 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
     private int? _draggedInventorySlotIndex;
     private bool _isFishing;
     private float _fishingTimer;
+    private float _biteWindowTimer;
     private bool _fishBiting;
     private GridPosition _fishingTarget;
+    private string _newFarmName = "";
+    private FarmSaveInfo[] _farmList = [];
 
     private const float MaximumOxygenSeconds = 8f;
+    private const float BiteWindowSeconds = 5f;
+
+    private static readonly ShopEntry[] ShopCatalogue =
+    [
+        new("turnip_seed", "Turnip Seed", 10),
+        new("carrot_seed", "Carrot Seed", 12),
+        new("tomato_seed", "Tomato Seed", 15),
+        new("potato_seed", "Potato Seed", 18),
+    ];
 
     public CozyGame()
     {
@@ -82,16 +94,17 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
         _ui = new GameUiRenderer(_pixel, _font, _art);
         _settings = GameSettings.Load();
         ApplySettings();
+        _audio.Initialize();
 
         string dataDirectory = Path.Combine(AppContext.BaseDirectory, "Data");
         _content = ContentDatabase.Load(dataDirectory);
-        _saveManager = new SaveManager();
         _state = new GameState(_content);
-        ResetPlayerFromState();
+        Window.TextInput += OnTextInput;
     }
 
     protected override void UnloadContent()
     {
+        _audio.Dispose();
         _art?.Dispose();
         base.UnloadContent();
     }
@@ -107,13 +120,13 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
         if (_screen == GameScreen.Playing)
         {
             UpdatePlaying(deltaSeconds);
+            UpdateFishing(deltaSeconds);
         }
         else
         {
             UpdateMenus();
         }
 
-        UpdateFishing(deltaSeconds);
         _particles.Update(deltaSeconds);
         base.Update(gameTime);
     }
@@ -143,6 +156,12 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
                 break;
             case GameScreen.HomeInterior:
                 RequireUi().DrawHomeInterior(_spriteBatch, mouse);
+                break;
+            case GameScreen.FarmSelect:
+                RequireUi().DrawFarmSelect(_spriteBatch, _farmList, mouse);
+                break;
+            case GameScreen.NewFarm:
+                RequireUi().DrawNewFarm(_spriteBatch, _newFarmName, mouse);
                 break;
             default:
                 DrawGameplay(_spriteBatch);
@@ -227,11 +246,15 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
         {
             if (Clicked(mouse, GameUiRenderer.NewGameButton))
             {
-                StartNewGame();
+                _newFarmName = "";
+                _screen = GameScreen.NewFarm;
+                _audio.PlaySfx("menu_open");
             }
             else if (Clicked(mouse, GameUiRenderer.LoadGameButton))
             {
-                LoadGame();
+                _farmList = SaveManager.ListFarms();
+                _screen = GameScreen.FarmSelect;
+                _audio.PlaySfx("menu_open");
             }
             else if (Clicked(mouse, GameUiRenderer.SettingsButton))
             {
@@ -284,6 +307,38 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
                 _audio.PlaySfx("inventory_close");
             }
         }
+        else if (_screen == GameScreen.FarmSelect)
+        {
+            if (_bindings.CancelPressed(_input) || Clicked(mouse, GameUiRenderer.FarmSelectBackButton))
+            {
+                _screen = GameScreen.MainMenu;
+                _audio.PlaySfx("menu_close");
+            }
+            else
+            {
+                for (int i = 0; i < Math.Min(_farmList.Length, 4); i++)
+                {
+                    if (Clicked(mouse, GameUiRenderer.FarmLoadButton(i)))
+                    {
+                        _saveManager = new SaveManager(_farmList[i].FarmName);
+                        LoadGame();
+                        break;
+                    }
+                }
+            }
+        }
+        else if (_screen == GameScreen.NewFarm)
+        {
+            if (_bindings.CancelPressed(_input) || Clicked(mouse, GameUiRenderer.NewFarmCancelButton))
+            {
+                _screen = GameScreen.MainMenu;
+                _audio.PlaySfx("menu_close");
+            }
+            else if (_input.Pressed(Keys.Enter) || Clicked(mouse, GameUiRenderer.NewFarmCreateButton))
+            {
+                ConfirmNewFarm();
+            }
+        }
         else if (_screen == GameScreen.Settings)
         {
             if (_bindings.CancelPressed(_input) || Clicked(mouse, new Rectangle(252, 260, 136, 25)))
@@ -326,6 +381,10 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
                 _settings.ShowCollisionDebug = !_settings.ShowCollisionDebug;
                 _settings.Save();
             }
+        }
+        else if (_screen == GameScreen.Shop)
+        {
+            HandleShopInput();
         }
         else if (_screen == GameScreen.Credits && (_bindings.CancelPressed(_input) || _input.LeftClick()))
         {
@@ -402,6 +461,10 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
         {
             RequireUi().DrawPause(spriteBatch, VirtualMousePosition());
         }
+        else if (_screen == GameScreen.Shop)
+        {
+            RequireUi().DrawShop(spriteBatch, state, VirtualMousePosition(), ShopCatalogue);
+        }
 
         _toasts.Draw(spriteBatch, RequireUi());
         RequireUi().DrawDialogue(spriteBatch, _dialogue);
@@ -431,6 +494,13 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
         {
             _screen = GameScreen.HomeInterior;
             _audio.PlaySfx("door_open");
+            return;
+        }
+
+        if (state.World.GetTile(target).Type == TileType.Mailbox)
+        {
+            _screen = GameScreen.Shop;
+            _audio.PlaySfx("menu_open");
             return;
         }
 
@@ -481,6 +551,9 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
             ToolKind.FishingRod => StartOrResolveFishing(state, target),
             ToolKind.Axe => ClearSimpleObstacle(state, target, TileType.Bush, 3),
             ToolKind.Pickaxe => ClearSimpleObstacle(state, target, TileType.Stone, 3),
+            ToolKind.Scythe => ClearScytheTarget(state, target),
+            ToolKind.Hammer => ClearHammerTarget(state, target),
+            ToolKind.Shovel => ClearShovelTarget(state, target),
             _ => selectedItem.Type == ItemType.Seed
                 && state.Farming.Plant(state.World, target, state.Inventory, selectedItem.Id, state.Content),
         };
@@ -572,8 +645,21 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
 
     private void UpdateFishing(float deltaSeconds)
     {
-        if (!_isFishing || _fishBiting)
+        if (!_isFishing)
         {
+            return;
+        }
+
+        if (_fishBiting)
+        {
+            _biteWindowTimer -= deltaSeconds;
+            if (_biteWindowTimer <= 0)
+            {
+                _isFishing = false;
+                _fishBiting = false;
+                _toasts.Add("The fish got away.", "fish");
+                _audio.PlaySfx("fish_escape");
+            }
             return;
         }
 
@@ -581,6 +667,7 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
         if (_fishingTimer <= 0)
         {
             _fishBiting = true;
+            _biteWindowTimer = BiteWindowSeconds;
             _toasts.Add("Bite! Press E or click.", "fish");
             _audio.PlaySfx("fish_bite");
         }
@@ -619,6 +706,21 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
             return "Cast near water.";
         }
 
+        if (selectedItem.ToolKind == ToolKind.Scythe)
+        {
+            return !state.Energy.HasEnough(1) ? "Not enough energy." : "Use on tall grass or flowers.";
+        }
+
+        if (selectedItem.ToolKind == ToolKind.Hammer)
+        {
+            return !state.Energy.HasEnough(2) ? "Not enough energy." : "Use on barrels or fences.";
+        }
+
+        if (selectedItem.ToolKind == ToolKind.Shovel)
+        {
+            return !state.Energy.HasEnough(1) ? "Not enough energy." : "Use on soil or dirt.";
+        }
+
         return "Nothing happened.";
     }
 
@@ -626,7 +728,9 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
     {
         GridPosition target = _player.InteractionTarget();
         InventorySlot selectedSlot = state.Inventory[state.Player.SelectedHotbarIndex];
-        ItemDefinition? selectedItem = selectedSlot.ItemId is null ? null : state.Content.Items[selectedSlot.ItemId];
+        ItemDefinition? selectedItem = selectedSlot.ItemId is null
+            ? null
+            : state.Content.Items.GetValueOrDefault(selectedSlot.ItemId);
         if (IsHouseEntryTarget(target))
         {
             return "Press E to Enter Home";
@@ -635,10 +739,16 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
         return state.World.GetTile(target).Type switch
         {
             TileType.SleepSpot => "Press E to Sleep",
+            TileType.Mailbox => "Press E to Open Shop",
             TileType.ShippingBox => "Press E to Ship",
             TileType.Water when selectedItem?.ToolKind == ToolKind.FishingRod => "Press E to Fish",
             TileType.Water => "Use Rod to Fish",
             TileType.Dirt or TileType.Grass when selectedItem?.ToolKind == ToolKind.Hoe => "Use Hoe to Till",
+            TileType.TallGrass or TileType.Flower when selectedItem?.ToolKind == ToolKind.Scythe =>
+                "Use Scythe to Clear",
+            TileType.Barrel or TileType.Fence when selectedItem?.ToolKind == ToolKind.Hammer => "Use Hammer to Break",
+            TileType.Soil when selectedItem?.ToolKind == ToolKind.Shovel => "Use Shovel to Dig Up",
+            TileType.Dirt when selectedItem?.ToolKind == ToolKind.Shovel => "Use Shovel to Flatten",
             TileType.Soil when state.World.GetCrop(target) is null && selectedItem?.Type == ItemType.Seed =>
                 "Use Seed to Plant",
             TileType.Soil
@@ -720,7 +830,7 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
         InventorySlot slot = state.Inventory[state.Player.SelectedHotbarIndex];
         return slot.ItemId is null
             ? "Empty slot selected."
-            : $"{state.Content.Items[slot.ItemId].DisplayName} selected.";
+            : $"{state.Content.Items.GetValueOrDefault(slot.ItemId)?.DisplayName ?? slot.ItemId} selected.";
     }
 
     private bool CanSprint(GameState state, Vector2 movement, float deltaSeconds)
@@ -817,10 +927,32 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
     {
         _audio.SetMusicVolume(_settings.MusicVolume);
         _audio.SetSfxVolume(_settings.SfxVolume);
-        _graphics.PreferredBackBufferWidth = GameConstants.VirtualWidth * _settings.WindowScale;
-        _graphics.PreferredBackBufferHeight = GameConstants.VirtualHeight * _settings.WindowScale;
+        if (_settings.Fullscreen)
+        {
+            DisplayMode mode = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode;
+            _graphics.PreferredBackBufferWidth = mode.Width;
+            _graphics.PreferredBackBufferHeight = mode.Height;
+        }
+        else
+        {
+            _graphics.PreferredBackBufferWidth = GameConstants.VirtualWidth * _settings.WindowScale;
+            _graphics.PreferredBackBufferHeight = GameConstants.VirtualHeight * _settings.WindowScale;
+        }
+
         _graphics.IsFullScreen = _settings.Fullscreen;
         _graphics.ApplyChanges();
+    }
+
+    private void ConfirmNewFarm()
+    {
+        string trimmed = _newFarmName.Trim();
+        if (string.IsNullOrWhiteSpace(trimmed))
+        {
+            return;
+        }
+
+        _saveManager = new SaveManager(trimmed);
+        StartNewGame();
     }
 
     private void StartNewGame()
@@ -835,6 +967,26 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
         _state = RequireSaveManager().Load(RequireContent());
         ResetPlayerFromState();
         _screen = GameScreen.Playing;
+    }
+
+    private void OnTextInput(object? sender, TextInputEventArgs e)
+    {
+        if (_screen != GameScreen.NewFarm)
+        {
+            return;
+        }
+
+        if (e.Character == '\b')
+        {
+            if (_newFarmName.Length > 0)
+            {
+                _newFarmName = _newFarmName[..^1];
+            }
+        }
+        else if (e.Character >= ' ' && _newFarmName.Length < 24)
+        {
+            _newFarmName += e.Character;
+        }
     }
 
     private void ResetPlayerFromState()
@@ -865,6 +1017,79 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
         return true;
     }
 
+    private static bool ClearScytheTarget(GameState state, GridPosition target)
+    {
+        TileType type = state.World.GetTile(target).Type;
+        if ((type != TileType.TallGrass && type != TileType.Flower) || !state.Energy.Spend(1))
+        {
+            return false;
+        }
+
+        state.World.SetTile(target, TileType.Grass);
+        return true;
+    }
+
+    private static bool ClearHammerTarget(GameState state, GridPosition target)
+    {
+        TileType type = state.World.GetTile(target).Type;
+        if ((type != TileType.Barrel && type != TileType.Fence) || !state.Energy.Spend(2))
+        {
+            return false;
+        }
+
+        state.World.SetTile(target, TileType.Grass);
+        return true;
+    }
+
+    private static bool ClearShovelTarget(GameState state, GridPosition target)
+    {
+        TileType type = state.World.GetTile(target).Type;
+        if (type == TileType.Soil && state.Energy.Spend(1))
+        {
+            state.World.RemoveCrop(target);
+            state.World.SetTile(target, TileType.Dirt);
+            return true;
+        }
+
+        if (type == TileType.Dirt && state.Energy.Spend(1))
+        {
+            state.World.SetTile(target, TileType.Grass);
+            return true;
+        }
+
+        return false;
+    }
+
+    private void HandleShopInput()
+    {
+        Point mouse = VirtualMousePosition();
+        if (_bindings.CancelPressed(_input) || Clicked(mouse, GameUiRenderer.ShopCloseButton))
+        {
+            _screen = GameScreen.Playing;
+            _audio.PlaySfx("menu_close");
+            return;
+        }
+
+        GameState state = RequireState();
+        for (int i = 0; i < ShopCatalogue.Length; i++)
+        {
+            if (Clicked(mouse, GameUiRenderer.ShopItemBuyButton(i)))
+            {
+                ShopEntry entry = ShopCatalogue[i];
+                if (state.Economy.BuyItem(entry.ItemId, entry.Price, state.Inventory, state.Content))
+                {
+                    _toasts.Add($"Bought {entry.DisplayName}.", "item");
+                    _audio.PlaySfx("item_pickup");
+                }
+                else
+                {
+                    _toasts.Add("Not enough coins or no space.", "warn");
+                    _audio.PlaySfx("tool_fail");
+                }
+            }
+        }
+    }
+
     private bool Clicked(Point mouse, Rectangle rectangle)
     {
         return _input.LeftClick() && rectangle.Contains(mouse);
@@ -889,20 +1114,15 @@ public sealed class CozyGame : Microsoft.Xna.Framework.Game
 
     private Rectangle GetScaledDestination()
     {
-        int scale = Math.Max(
-            1,
-            Math.Min(
-                _settings.WindowScale,
-                Math.Min(
-                    GraphicsDevice.PresentationParameters.BackBufferWidth / GameConstants.VirtualWidth,
-                    GraphicsDevice.PresentationParameters.BackBufferHeight / GameConstants.VirtualHeight
-                )
-            )
-        );
+        int bbWidth = GraphicsDevice.PresentationParameters.BackBufferWidth;
+        int bbHeight = GraphicsDevice.PresentationParameters.BackBufferHeight;
+        int maxFromBuffer = Math.Min(bbWidth / GameConstants.VirtualWidth, bbHeight / GameConstants.VirtualHeight);
+        int maxScale = _settings.Fullscreen ? maxFromBuffer : _settings.WindowScale;
+        int scale = Math.Max(1, Math.Min(maxScale, maxFromBuffer));
         int width = GameConstants.VirtualWidth * scale;
         int height = GameConstants.VirtualHeight * scale;
-        int x = (GraphicsDevice.PresentationParameters.BackBufferWidth - width) / 2;
-        int y = (GraphicsDevice.PresentationParameters.BackBufferHeight - height) / 2;
+        int x = (bbWidth - width) / 2;
+        int y = (bbHeight - height) / 2;
         return new Rectangle(x, y, width, height);
     }
 

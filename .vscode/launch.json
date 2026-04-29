@@ -6,9 +6,9 @@
       "type": "coreclr",
       "request": "launch",
       "preLaunchTask": "build game",
-      "program": "${workspaceFolder}/src/QuietValley.Game/bin/Debug/net9.0/QuietValley.Game.dll",
+      "program": "${workspaceFolder}/src/QuietValley.Game/bin/Debug/net10.0/QuietValley.Game.dll",
       "args": [],
-      "cwd": "${workspaceFolder}/src/QuietValley.Game/bin/Debug/net9.0",
+      "cwd": "${workspaceFolder}/src/QuietValley.Game/bin/Debug/net10.0",
       "console": "internalConsole",
       "stopAtEntry": false
     },

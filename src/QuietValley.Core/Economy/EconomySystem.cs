@@ -51,6 +51,22 @@ public sealed class EconomySystem
         return (int)Math.Min(int.MaxValue, earned);
     }
 
+    public bool BuyItem(string itemId, int price, Inventory inventory, ContentDatabase content)
+    {
+        if (Coins < price || !content.Items.TryGetValue(itemId, out ItemDefinition? item))
+        {
+            return false;
+        }
+
+        if (!inventory.Add(itemId, 1, content.Items))
+        {
+            return false;
+        }
+
+        Coins -= price;
+        return true;
+    }
+
     public void SetCoins(int coins)
     {
         Coins = Math.Max(0, coins);

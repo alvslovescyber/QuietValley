@@ -18,12 +18,12 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: 9.0.x
+          dotnet-version: 10.0.x
 
       - name: Restore tools
         run: dotnet tool restore
@@ -32,7 +32,7 @@ jobs:
         run: dotnet restore QuietValley.sln
 
       - name: CSharpier check
-        run: dotnet csharpier check .
+        run: dotnet csharpier check . --ignore-path .csharpierignore --no-msbuild-check
 
       - name: Build game
         run: dotnet build src/QuietValley.Game/QuietValley.Game.csproj --configuration Release --no-restore

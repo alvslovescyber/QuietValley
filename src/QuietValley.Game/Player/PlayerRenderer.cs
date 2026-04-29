@@ -24,7 +24,7 @@ public sealed class PlayerRenderer(ArtAssets art, Texture2D pixel)
         Rectangle destination = new((int)screen.X - 4, (int)screen.Y + bob, 24, 16);
         if (player.IsSwimming)
         {
-            DrawSwimming(spriteBatch, player, screen, source, frame);
+            DrawSwimming(spriteBatch, player, screen, frame);
         }
         else
         {
@@ -42,20 +42,14 @@ public sealed class PlayerRenderer(ArtAssets art, Texture2D pixel)
         }
     }
 
-    private void DrawSwimming(
-        SpriteBatch spriteBatch,
-        PlayerController player,
-        Vector2 screen,
-        Rectangle playerSource,
-        int frame
-    )
+    private void DrawSwimming(SpriteBatch spriteBatch, PlayerController player, Vector2 screen, int frame)
     {
         Rectangle rippleDestination = new((int)screen.X - 10, (int)screen.Y + 4, 36, 20);
         spriteBatch.Draw(art.Props, rippleDestination, ArtAssets.WaterRippleSource, Color.White * 0.5f);
 
         int bob = player.IsMoving && frame is 1 or 3 ? -1 : 0;
-        Rectangle swimmerDestination = new((int)screen.X - 4, (int)screen.Y - 2 + bob, 24, 16);
-        spriteBatch.Draw(art.Player, swimmerDestination, playerSource, Color.White);
+        Rectangle swimmerDestination = new((int)screen.X - 4, (int)screen.Y - 2 + bob, 24, 20);
+        spriteBatch.Draw(art.Props, swimmerDestination, ArtAssets.SwimmerSource(frame), Color.White);
 
         DrawWaterStroke(spriteBatch, (int)screen.X - 6, (int)screen.Y + 9, 28, Palette.WaterLight * 0.85f);
         spriteBatch.Draw(

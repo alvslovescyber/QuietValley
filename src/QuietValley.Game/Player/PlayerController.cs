@@ -198,8 +198,8 @@ public sealed class PlayerController
     private static GridPosition WorldToTile(Vector2 worldPosition)
     {
         return new GridPosition(
-            Math.Clamp((int)MathF.Floor(worldPosition.X / GameConstants.TileSize), 0, int.MaxValue),
-            Math.Clamp((int)MathF.Floor(worldPosition.Y / GameConstants.TileSize), 0, int.MaxValue)
+            (int)MathF.Floor(worldPosition.X / GameConstants.TileSize),
+            (int)MathF.Floor(worldPosition.Y / GameConstants.TileSize)
         );
     }
 

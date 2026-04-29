@@ -9,6 +9,8 @@ using QuietValley.Core.World;
 
 namespace QuietValley.Core.Saving;
 
+public readonly record struct FarmSaveInfo(string FarmName, DateTime LastSaved);
+
 public sealed class SaveManager
 {
     private static readonly JsonSerializerOptions SerializerOptions = new()
@@ -18,14 +20,54 @@ public sealed class SaveManager
         Converters = { new JsonStringEnumConverter() },
     };
 
+    public string FarmName { get; }
     public string SavePath { get; }
 
-    public SaveManager(string gameName = "QuietValley")
+    public SaveManager(string farmName, string gameName = "QuietValley")
     {
         string applicationData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-        string saveDirectory = Path.Combine(applicationData, gameName);
+        string sanitized = SanitizeName(farmName);
+        if (string.IsNullOrWhiteSpace(sanitized))
+        {
+            sanitized = "Farm";
+        }
+
+        FarmName = sanitized;
+        string saveDirectory = Path.Combine(applicationData, gameName, "farms", sanitized);
         Directory.CreateDirectory(saveDirectory);
         SavePath = Path.Combine(saveDirectory, "savegame.json");
+    }
+
+    public static FarmSaveInfo[] ListFarms(string gameName = "QuietValley")
+    {
+        string applicationData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+        string farmsDirectory = Path.Combine(applicationData, gameName, "farms");
+        if (!Directory.Exists(farmsDirectory))
+        {
+            return [];
+        }
+
+        return Directory
+            .GetDirectories(farmsDirectory)
+            .Select(dir =>
+            {
+                string name = Path.GetFileName(dir);
+                string savePath = Path.Combine(dir, "savegame.json");
+                DateTime lastSaved = File.Exists(savePath)
+                    ? File.GetLastWriteTime(savePath)
+                    : Directory.GetCreationTime(dir);
+                return new FarmSaveInfo(name, lastSaved);
+            })
+            .OrderByDescending(f => f.LastSaved)
+            .ToArray();
+    }
+
+    private static string SanitizeName(string name)
+    {
+        char[] invalid = Path.GetInvalidFileNameChars();
+        string result = new(name.Where(c => !invalid.Contains(c)).ToArray());
+        result = result.Trim();
+        return result.Length > 32 ? result[..32] : result;
     }
 
     public void Save(GameState state)
