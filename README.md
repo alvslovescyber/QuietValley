@@ -58,7 +58,7 @@ dotnet run --project src/QuietValley.Game/QuietValley.Game.csproj
 ## Validate
 
 ```bash
-dotnet csharpier check .
+dotnet csharpier check . --ignore-path .csharpierignore --no-msbuild-check
 dotnet build QuietValley.sln --no-restore
 dotnet test tests/QuietValley.SmokeTests/QuietValley.SmokeTests.csproj --no-restore --collect:"XPlat Code Coverage"
 ```
@@ -67,8 +67,8 @@ dotnet test tests/QuietValley.SmokeTests/QuietValley.SmokeTests.csproj --no-rest
 
 ```bash
 dotnet tool restore
-dotnet csharpier format .
-dotnet csharpier check .
+dotnet csharpier format . --ignore-path .csharpierignore --no-msbuild-check
+dotnet csharpier check . --ignore-path .csharpierignore --no-msbuild-check
 ./scripts/check.sh
 ```
 
@@ -127,8 +127,10 @@ Build outputs, packaged releases, coverage reports, and temporary atlas-cleaning
 
 Packaged builds are published on GitHub Releases when available:
 
-- macOS: download the `.dmg`, open it, and run `QuietValley.Game`.
+- macOS: download the `.dmg`, open it, drag `QuietValley.app` into `Applications`, and open the app from there.
 - Windows: download the `QuietValley-win-x64.zip`, extract it, and run `QuietValley.Game.exe`.
+
+The macOS release script creates a real `.app` bundle inside the DMG. If Apple Developer ID credentials are configured in GitHub Actions, the app is signed, notarized, and stapled for normal Gatekeeper launch. Without those credentials, local builds are ad-hoc signed only, so macOS may report the app as damaged or unverified after download; use right-click > Open for local testing, or remove quarantine with `xattr -dr com.apple.quarantine /Applications/QuietValley.app`.
 
 ## Save Location
 
