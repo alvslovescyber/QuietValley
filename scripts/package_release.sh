@@ -125,8 +125,9 @@ PLIST
     (cd "$bundle_root" && zip -qry "$RELEASE_DIR/QuietValley-$runtime.zip" "$MAC_APP_NAME.app")
 
     if command -v hdiutil >/dev/null 2>&1; then
-        local dmg_rw dmg_out size_mb dev
-        dmg_rw="$RELEASE_DIR/QuietValley-$runtime-rw.dmg"
+        local dmg_tmp dmg_rw dmg_out size_mb dev
+        dmg_tmp="$(mktemp -d)"
+        dmg_rw="$dmg_tmp/QuietValley-$runtime-rw.dmg"
         dmg_out="$RELEASE_DIR/QuietValley-$runtime.dmg"
         size_mb=$(( $(du -sm "$app_path" | awk '{print $1}') + 32 ))
 
@@ -153,7 +154,7 @@ PLIST
             -imagekey zlib-level=9 \
             -o "${dmg_out%.dmg}" \
             -ov
-        rm -f "$dmg_rw"
+        rm -rf "$dmg_tmp"
 
         hdiutil verify "$dmg_out"
         notarize_dmg_if_configured "$dmg_out"
