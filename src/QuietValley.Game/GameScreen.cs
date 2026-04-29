@@ -9,4 +9,5 @@ public enum GameScreen
     Settings,
     Credits,
     HomeInterior,
+    Shop,
 }

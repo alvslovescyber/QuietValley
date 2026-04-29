@@ -52,9 +52,9 @@
   {
     "id": "scythe",
     "displayName": "Scythe",
-    "description": "Prepared for clearing grass in a later pass.",
+    "description": "Clears tall grass and flowers into open ground.",
     "type": "Tool",
-    "toolKind": "None",
+    "toolKind": "Scythe",
     "iconKey": "tool_scythe",
     "maxStack": 1,
     "sellPrice": 0
@@ -62,9 +62,9 @@
   {
     "id": "hammer",
     "displayName": "Hammer",
-    "description": "Prepared for building and upgrades later.",
+    "description": "Breaks down barrels and fences.",
     "type": "Tool",
-    "toolKind": "None",
+    "toolKind": "Hammer",
     "iconKey": "tool_hammer",
     "maxStack": 1,
     "sellPrice": 0
@@ -72,9 +72,9 @@
   {
     "id": "shovel",
     "displayName": "Shovel",
-    "description": "Prepared for path and soil cleanup later.",
+    "description": "Reverts soil to dirt, and dirt back to grass.",
     "type": "Tool",
-    "toolKind": "None",
+    "toolKind": "Shovel",
     "iconKey": "tool_shovel",
     "maxStack": 1,
     "sellPrice": 0

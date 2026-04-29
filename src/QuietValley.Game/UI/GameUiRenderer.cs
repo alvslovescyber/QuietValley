@@ -16,6 +16,9 @@ public sealed class GameUiRenderer(Texture2D pixel, PixelFont font, ArtAssets ar
     public static readonly Rectangle QuitButton = new(526, 278, 84, 34);
     public static readonly Rectangle ExitHomeButton = new(488, 306, 112, 26);
     public static readonly Rectangle SleepHomeButton = new(368, 306, 104, 26);
+    public static readonly Rectangle ShopCloseButton = new(260, 263, 120, 22);
+
+    public static Rectangle ShopItemBuyButton(int index) => new(448, 106 + index * 38, 68, 20);
 
     public void DrawMainMenu(SpriteBatch spriteBatch, Point mouse)
     {
@@ -86,6 +89,40 @@ public sealed class GameUiRenderer(Texture2D pixel, PixelFont font, ArtAssets ar
         DrawButton(spriteBatch, SleepHomeButton, "Sleep", mouse);
         DrawButton(spriteBatch, ExitHomeButton, "Exit Home", mouse);
         font.Draw(spriteBatch, "Press E or Esc to leave.", new Vector2(68, 316), Palette.TextLight, 1);
+    }
+
+    public void DrawShop(SpriteBatch spriteBatch, GameState state, Point mouse, ShopEntry[] catalogue)
+    {
+        DrawOverlay(spriteBatch);
+        Rectangle panel = new(100, 56, 440, 240);
+        DrawPanel(spriteBatch, panel, PanelStyle.Parchment);
+        DrawTinyFlower(spriteBatch, 120, 75);
+        font.Draw(spriteBatch, "Seed Shop", new Vector2(140, 72), Palette.Text, 2);
+        DrawCoin(spriteBatch, 488, 80);
+        font.Draw(spriteBatch, $"{state.Economy.Coins}G", new Vector2(502, 80), Palette.Text, 1);
+
+        for (int i = 0; i < catalogue.Length; i++)
+        {
+            int y = 106 + i * 38;
+            ShopEntry entry = catalogue[i];
+            ItemDefinition? item = state.Content.Items.GetValueOrDefault(entry.ItemId);
+            if (item is not null)
+            {
+                DrawItemIcon(spriteBatch, item, new Rectangle(116, y, 20, 20));
+            }
+
+            font.Draw(spriteBatch, entry.DisplayName, new Vector2(142, y + 3), Palette.Text, 1);
+            DrawCoin(spriteBatch, 142, y + 18);
+            font.Draw(spriteBatch, $"{entry.Price}G", new Vector2(156, y + 18), Palette.TextLight, 1);
+            DrawButton(spriteBatch, ShopItemBuyButton(i), "Buy", mouse);
+            if (state.Economy.Coins < entry.Price)
+            {
+                spriteBatch.Draw(pixel, ShopItemBuyButton(i), new Color(0, 0, 0, 80));
+            }
+        }
+
+        DrawButton(spriteBatch, ShopCloseButton, "Close", mouse);
+        font.Draw(spriteBatch, "Esc to close.", new Vector2(390, 267), Palette.TextLight, 1);
     }
 
     public void DrawHotbar(SpriteBatch spriteBatch, GameState state, Point mouse)
@@ -681,3 +718,5 @@ public enum PanelStyle
     Compact,
     Parchment,
 }
+
+public readonly record struct ShopEntry(string ItemId, string DisplayName, int Price);

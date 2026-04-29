@@ -8,4 +8,7 @@ public enum ToolKind
     Axe,
     Pickaxe,
     FishingRod,
+    Scythe,
+    Hammer,
+    Shovel,
 }
