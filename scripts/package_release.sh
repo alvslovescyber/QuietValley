@@ -107,6 +107,10 @@ PLIST
 </plist>
 PLIST
 
+    if command -v xattr >/dev/null 2>&1; then
+        xattr -cr "$app_path" || true
+    fi
+
     if command -v codesign >/dev/null 2>&1; then
         if [[ -n "${MACOS_CODESIGN_IDENTITY:-}" ]]; then
             codesign \
@@ -146,6 +150,24 @@ PLIST
         [[ -n "$dev" ]] || { echo "ERROR: hdiutil attach produced no mount point for $dmg_rw" >&2; exit 1; }
         cp -R "$app_path" "$dev/"
         ln -s /Applications "$dev/Applications"
+        cat > "$dev/INSTALL.txt" <<'INSTRUCTIONS'
+QuietValley — install
+
+1. Drag QuietValley.app onto the Applications shortcut in this window.
+2. Eject this disk (right-click in Finder, or drag it to the Trash).
+3. Open Applications and launch QuietValley.
+
+First launch — macOS Gatekeeper
+This build is not notarized by Apple, so macOS may say "Apple cannot
+verify the developer" or "QuietValley.app is damaged and can't be
+opened". The app is fine; macOS just doesn't trust it yet.
+
+  - Easiest fix: right-click QuietValley.app -> Open -> click Open in
+    the dialog. Only needed once.
+  - If "damaged" persists, open Terminal and run:
+        xattr -dr com.apple.quarantine /Applications/QuietValley.app
+    Then launch from Applications normally.
+INSTRUCTIONS
         hdiutil detach "$dev" -quiet
 
         # Convert to compressed read-only and verify integrity
@@ -190,7 +212,22 @@ for runtime in osx-arm64 osx-x64; do
     create_macos_app_bundle "$runtime"
 done
 
-(cd "$PUBLISH_DIR" && zip -qr "$RELEASE_DIR/QuietValley-win-x64.zip" "win-x64")
+WIN_STAGE="$PUBLISH_DIR/win-x64-stage"
+rm -rf "$WIN_STAGE"
+mkdir -p "$WIN_STAGE/$MAC_APP_NAME"
+rsync -a "$PUBLISH_DIR/win-x64/" "$WIN_STAGE/$MAC_APP_NAME/"
+cat > "$WIN_STAGE/$MAC_APP_NAME/INSTALL.txt" <<INSTRUCTIONS
+QuietValley — install
+
+1. Keep this folder somewhere stable (e.g. Documents or Program Files).
+2. Double-click QuietValley.Game.exe to play.
+
+First launch — Windows SmartScreen
+Because this build is not signed with a paid Authenticode certificate,
+Windows SmartScreen may show "Windows protected your PC". Click
+"More info" and then "Run anyway". Only needed once.
+INSTRUCTIONS
+(cd "$WIN_STAGE" && zip -qr "$RELEASE_DIR/QuietValley-win-x64.zip" "$MAC_APP_NAME")
 
 (cd "$RELEASE_DIR" && shasum -a 256 -- * > SHA256SUMS.txt)
 ls -lh "$RELEASE_DIR"

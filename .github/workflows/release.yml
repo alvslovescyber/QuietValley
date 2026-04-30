@@ -64,6 +64,19 @@ jobs:
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
         run: ./scripts/package_release.sh
 
+      - name: Verify release artifacts contain QuietValley.app and QuietValley-win-x64.zip
+        run: |
+          set -euo pipefail
+          test -f artifacts/release/QuietValley-osx-arm64.dmg
+          test -f artifacts/release/QuietValley-osx-x64.dmg
+          test -f artifacts/release/QuietValley-osx-arm64.zip
+          test -f artifacts/release/QuietValley-osx-x64.zip
+          test -f artifacts/release/QuietValley-win-x64.zip
+          test -f artifacts/release/SHA256SUMS.txt
+          unzip -l artifacts/release/QuietValley-osx-arm64.zip | grep -q "QuietValley.app/"
+          unzip -l artifacts/release/QuietValley-osx-x64.zip | grep -q "QuietValley.app/"
+          unzip -l artifacts/release/QuietValley-win-x64.zip | grep -q "QuietValley/QuietValley.Game.exe"
+
       - name: Upload packaged artifacts
         uses: actions/upload-artifact@v4
         with:

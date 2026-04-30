@@ -129,7 +129,7 @@ Packaged builds are published on GitHub Releases when available:
 
 - **macOS (recommended)**: download `QuietValley-osx-arm64.zip` (Apple Silicon) or `QuietValley-osx-x64.zip` (Intel), unzip it, and double-click `QuietValley.app` to play. You can also drag it into `/Applications` first.
 - **macOS (DMG)**: download the `.dmg` file. Opening a `.dmg` mounts it as a virtual disk in Finder — this is normal macOS behaviour for disk images. Drag `QuietValley.app` from the disk window into the `Applications` shortcut, then eject the disk and launch the app from Applications.
-- **Windows**: download `QuietValley-win-x64.zip`, extract it, open the `win-x64` folder, and run `QuietValley.Game.exe`.
+- **Windows**: download `QuietValley-win-x64.zip`, extract it, open the `QuietValley` folder, and run `QuietValley.Game.exe`. Windows SmartScreen may warn on first launch — click **More info** → **Run anyway**.
 
 The macOS release script creates a real `.app` bundle. If Apple Developer ID credentials are configured in GitHub Actions, the app is signed, notarized, and stapled for normal Gatekeeper launch. Without those credentials, local builds are ad-hoc signed only, so macOS may report the app as damaged or unverified after download; use right-click > Open for local testing, or remove quarantine with `xattr -dr com.apple.quarantine /Applications/QuietValley.app`.
 

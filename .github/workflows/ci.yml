@@ -14,7 +14,7 @@ permissions:
 jobs:
   build-test-format:
     name: Build, Test, Format
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
