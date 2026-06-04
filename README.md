@@ -12,11 +12,6 @@ The current build is not a finished commercial game yet. It is a playable, modul
 
 The title screen uses a new original generated pixel-art countryside scene with a warm valley sunset, farmhouse, pond, fences, lanterns, flowers, and built-in wooden/parchment menu plaques. The runtime draws crisp labels and hover highlights over the generated UI artwork.
 
-### Runtime Asset Showcase
-
-![QuietValley runtime assets](docs/images/runtime-assets-showcase.png)
-
-The active runtime atlases now use the generated replacement assets for grass, water, farm soil, dirt paths, rocks, trees, bushes, props, fences, houses, town objects, swimming frames, and water ripples. Chroma-key purple backgrounds are stripped during atlas generation.
 
 ### Interior and Town Asset Direction
 
