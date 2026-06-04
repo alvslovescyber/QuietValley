@@ -20,12 +20,6 @@ The title screen uses a new original generated pixel-art countryside scene with 
 The house/interior pass adds a cozy living room screen, town house concepts, well, mailbox, signpost, planter, lamp post, fireplace, bed, sofa, bookshelf, and warm wood furniture references. These assets are original generated project assets and are wired into the runtime where useful.
 The documentation sheet is composited on a neutral meadow/parchment background so there is no visible purple chroma-key backdrop.
 
-### Tool and Item Icons
-
-![QuietValley generated tool and item icons](docs/images/tool-and-item-icons.png)
-
-The hotbar uses a regenerated clean 3x3 parchment tool source sheet for hoe, watering can, axe, pickaxe, fishing rod, seed bag, scythe, hammer, and shovel. Legacy magenta-backed tool sources were removed from the runtime icon pipeline.
-
 ## Current Gameplay Features
 
 - Custom pixel-rendered MonoGame desktop window with point-clamped scaling.
